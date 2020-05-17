@@ -1,0 +1,7 @@
+#!/bin/bash
+
+bash /home/$USER/.config/PrayerTimes/scripts/clean/clean_at
+
+systemctl disable prayer-times
+rm -Rf /home/$USER/.config/PrayerTimes
+sudo rm /usr/local/bin/prayer-times /etc/systemd/system/prayer-times.service
