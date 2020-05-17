@@ -28,7 +28,7 @@ WantedBy=multi-user.target
 
 sudo mv $dir/scripts/prayer-times /usr/local/bin/prayer-times
 
-sudo chmod 744 /usr/local/bin/prayer-times.sh
+sudo chmod 744 /usr/local/bin/prayer-times
 sudo chmod 664 /etc/systemd/system/prayer-times.service
 
 sudo systemctl daemon-reload

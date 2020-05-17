@@ -1,16 +1,16 @@
 #!/bin/bash
 
-echo $USER > ../python/username
-
 dir=/home/$USER/.config/PrayerTimes
+
+echo -n $USER > $dir/python/username
 
 bash $dir/scripts/clean/clean_at
 
 python $dir/python/load_prayer_times.py
 
 # loading current time
-now_hour=`date '+%H'`
-now_minutes=`date '+%M'`
+# now_hour=`date '+%H'`
+# now_minutes=`date '+%M'`
 # all_now_minutes=$((now_minutes + now_hour*60))
 
 # array of all prayer times
@@ -42,5 +42,5 @@ do
 
 done
 
-    at 00:01 < /usr/local/bin/prayer-times.sh
+    at 00:01 < /usr/local/bin/prayer-times
 
