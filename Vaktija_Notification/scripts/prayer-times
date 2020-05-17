@@ -2,11 +2,9 @@
 
 dir=/home/$USER/.config/PrayerTimes
 
-echo -n $USER > $dir/python/username
-
 bash $dir/scripts/clean/clean_at
 
-python $dir/python/load_prayer_times.py
+python $dir/python/load_prayer_times.py $USER
 
 # loading current time
 # now_hour=`date '+%H'`

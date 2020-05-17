@@ -1,7 +1,6 @@
-import json,requests
+import json,requests,sys
 
-with open("username") as the_file:
-    username=the_file.read().replace('\n','')
+username=sys.argv[1]
 
 content = requests.get("https://api.vaktija.ba/vaktija/v1/14")
 prayer_times = json.loads(content.content)
