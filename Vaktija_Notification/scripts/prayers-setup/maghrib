@@ -5,6 +5,12 @@ dir=/home/$USER/.config/PrayerTimes/
 icon=$dir/icon/1200x630wa.png
 time=$(cat $dir/data/prayer-maghrib)
 date=$(cat $dir/data/prayer-date)
+mode=$(cat $dir/scripts/prayers-setup/mode)
 
-notify-send --icon=$icon "20 minuta do akšama" "Akšam u $time \t\t\t\t\t\t\t\t\      ($date)"
-paplay $dir/sound/alarm.oga
+if [ "$mode" == "ramdan" ]
+then
+    notify-send --icon=$icon "20 minuta do iftara" "Iftar u $time \t\t\t\t\t\t\t\t\      ($date)"
+else
+    notify-send --icon=$icon "20 minuta do akšama" "Akšam u $time \t\t\t\t\t\t\t\t\      ($date)"
+fi
+    paplay $dir/sound/alarm.oga

@@ -1,8 +1,9 @@
 #!/bin/bash
 
-dir=/home/$USER/.config/PrayerTimes/
+dir=/home/$USER/.config/PrayerTimes
 name=$1
 time=$2
+mode=`cat $dir/scripts/prayers-setup/mode`
 prayerHour=`echo $time | awk '{split($0, array, ":")} END{print array[1]}'`
 prayerMinute=`echo $time | awk '{split($0, array, ":")} END{print array[2]}'`
 icon=$dir/icon/1200x630wa.png
@@ -12,8 +13,14 @@ date=`cat $dir/data/prayer-date`
 case $name in
 
     "dawn")
-        name1=zore
-        name2=Zora
+        if [ "$mode" == "ramadan" ]
+        then 
+            name1="kraja sehura"
+            name2="Kraj sehura"
+        else
+            name1=zore
+            name2=Zora
+        fi
         ;;
 
     "fajr")
@@ -32,8 +39,14 @@ case $name in
         ;;
 
     "maghrib")
-        name1=akšama
-        name2=Akšam
+        if [ "$mode" == "ramdan"]
+        then
+            name1=iftara
+            name2=iftar
+        else
+            name1=akšama
+            name2=Akšam
+        fi
         ;;
 
     "isha")

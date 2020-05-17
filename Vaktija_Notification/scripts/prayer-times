@@ -32,7 +32,14 @@ do
     case $arg in
 
         "--help" | "-h")
-            echo HELP
+            echo "HELP
+            --configure     |   -c              Configure all 5 daily prayer including dawn.
+
+            --next          |   -n              Show next upcoming prayer via notification.
+
+            --mode-ramadan  |   -mr             Change modes. If ramadan set you will see time until iftar
+            --mode-default  |   -md             and time until sehoor ends.
+            "
             break
             ;;
 
@@ -76,6 +83,16 @@ do
                     break
                 fi
             fi
+            ;;
+
+        "--mode-ramadan" | "-mr")
+            echo ramadan > $dir/scripts/prayers-setup/mode
+            break
+            ;;
+
+        "--mode-default" | "-md")
+            echo default > $dir/scripts/prayers-setup/mode
+            break
             ;;
 
         *)
