@@ -47,7 +47,7 @@ do
             if [ $i -eq 0 ]
             then
                 bash $dir/scripts/clean/clean-at
-                at 00:01 < /usr/local/bin/prayer-times
+                at 00:01 < /usr/local/bin/prayertimes
             fi
             # scheduling notifications 20min earlier
             allPrayerMinutes=$((allPrayerMinutes - 20))
