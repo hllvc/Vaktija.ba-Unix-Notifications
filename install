@@ -4,8 +4,8 @@ dir=/home/$USER/.config/PrayerTimes
 
 tar -xf PrayerTimes.tar.gz
 mkdir $dir
-mv Vaktija_Notification/* $dir
+cp -r Vaktija_Notification/* $dir
 mkdir $dir/data
-rm -Rf Vaktija_Notification
+# rm -Rf Vaktija_Notification
 
-sudo ./install_essential $dir
+sudo ./install-essential $dir

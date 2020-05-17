@@ -36,7 +36,7 @@ do
             then
                 bash $dir/scripts/clean/clean-at
             fi
-            # scheduling notificationsa 20min earlier
+            # scheduling notifications 20min earlier
             allPrayerMinutes=$((allPrayerMinutes - 20))
             prayerHour=$((allPrayerMinutes/60))
             prayerMinutes=$((allPrayerMinutes%60))
@@ -50,8 +50,17 @@ do
             then
                 continue
             else
-                # run
+                allPrayerMinutes=$((allPreyerMinutes-allNowMinutes))
+                prayerHour=$((allPrayerMinutes/60))
+                prayerMinutes=$((allPrayerMinutes%60))
+                time=`echo $prayerHour:$prayerMinutes`
+                $dir/scripts/prayers-setup/prayer-notif $name $time
             fi
+            ;;
+
+        *)
+            echo help
+            ;;
     esac
 done
 

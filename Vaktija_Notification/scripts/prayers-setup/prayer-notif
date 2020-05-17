@@ -1,0 +1,46 @@
+#!/bin/bash
+
+
+dir=/home/$USER/.config/PrayerTimes/
+name=$1
+time=$2
+icon=$dir/icon/1200x630wa.png
+prayerTime=$(cat $dir/data/prayer-$name)
+date=$(cat $dir/data/prayer-date)
+
+case $name in
+
+    "dawn")
+        name1=zore
+        name2=Zora
+        ;;
+
+    "fajr")
+        name1=sabaha
+        name2=Sabah
+        ;;
+
+    "zuhr")
+        name1=podne
+        name2=Podne
+        ;;
+    
+    "asr")
+        name1=ikindije
+        name2=Ikindija
+        ;;
+
+    "maghrib")
+        name1=akšama
+        name2=Akšam
+        ;;
+
+    "isha")
+        name1=jacije
+        name2=Jacija
+        ;;
+
+esac
+
+notify-send --icon=$icon "20 minuta do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+paplay $dir/sound/alarm.oga
