@@ -1,8 +1,10 @@
 #!/bin/bash
 
-icon=/home/hllvc/Documents/Git_Repos/Vaktija_Notification/icon/1200x630wa.png
-time=$(cat /home/hllvc/Documents/Git_Repos/Vaktija_Notification/data/prayer_zuhr)
-date=$(cat /home/hllvc/Documents/Git_Repos/Vaktija_Notification/data/prayer_date)
+dir=/home/$USER/.config/PrayerTimes/Vaktija_Notification
+
+icon=$dir/icon/1200x630wa.png
+time=$(cat $dir/data/prayer_zuhr)
+date=$(cat $dir/data/prayer_date)
 
 notify-send --icon=$icon "20 minuta do podne" "Podne u $time \t\t\t\t\t\t\t\t\t      ($date)"
-paplay /home/hllvc/Documents/Git_Repos/Vaktija_Notification/sound/alarm.oga
+paplay $dir/sound/alarm.oga

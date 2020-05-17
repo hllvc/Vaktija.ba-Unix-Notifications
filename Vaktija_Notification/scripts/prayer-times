@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo $USER > ../python/username
+
 dir=/home/$USER/.config/PrayerTimes
 
 bash $dir/scripts/clean/clean_at
