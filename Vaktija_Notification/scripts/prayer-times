@@ -1,0 +1,46 @@
+#!/bin/bash
+
+echo $USER > ../python/username
+
+dir=/home/$USER/.config/PrayerTimes
+
+bash $dir/scripts/clean/clean_at
+
+python $dir/python/load_prayer_times.py
+
+# loading current time
+now_hour=`date '+%H'`
+now_minutes=`date '+%M'`
+# all_now_minutes=$((now_minutes + now_hour*60))
+
+# array of all prayer times
+prayers_list=(dawn fajr zuhr asr maghrib isha)
+
+for i in {0..5}
+do
+
+    # reading names and time of prayers
+    name=${prayers_list[i]}
+    data=$(cat $dir/data/prayer_$name)
+
+    # spliting time to hours and minutes and converting all to minutes
+    prayer_hour=`echo $data | awk '{split($0, array, ":")} END{print array[1]}'`
+    prayer_minutes=`echo $data | awk '{split($0, array, ":")} END{print array[2]}'`
+    all_prayer_minutes=$((prayer_minutes + prayer_hour*60))
+
+    # scheduling notificationsa 20min earlier
+    all_prayer_minutes=$((all_prayer_minutes - 20))
+    prayer_hour=$((all_prayer_minutes/60))
+    prayer_minutes=$((all_prayer_minutes%60))
+    time=`echo $prayer_hour:$prayer_minutes`
+    # all_now_minutes=$((now_minutes + now_hour*60+1))
+    # now_hour=$((all_now_minutes/60))
+    # now_minutes=$((all_now_minutes%60))
+    # time=`echo $now_hour:$now_minutes`
+    # ./prayers_setup/$name;break
+    at $time < $dir/scripts/prayers_setup/$name
+
+done
+
+    at 00:01 < /usr/local/bin/prayer-times.sh
+
