@@ -1,12 +1,13 @@
 #!/bin/bash
 
-
 dir=/home/$USER/.config/PrayerTimes/
 name=$1
 time=$2
+prayerHour=`echo $time | awk '{split($0, array, ":")} END{print array[1]}'`
+prayerMinute=`echo $time | awk '{split($0, array, ":")} END{print array[2]}'`
 icon=$dir/icon/1200x630wa.png
-prayerTime=$(cat $dir/data/prayer-$name)
-date=$(cat $dir/data/prayer-date)
+prayerTime=`cat $dir/data/prayer-$name`
+date=`cat $dir/data/prayer-date`
 
 case $name in
 
@@ -42,5 +43,5 @@ case $name in
 
 esac
 
-notify-send --icon=$icon "20 minuta do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+notify-send --icon=$icon "$prayerHour sata i $prayerMinute minuta do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
 paplay $dir/sound/alarm.oga

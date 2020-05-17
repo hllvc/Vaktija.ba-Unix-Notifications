@@ -3,8 +3,8 @@
 dir=/home/$USER/.config/PrayerTimes/
 
 icon=$dir/icon/1200x630wa.png
-time=$(cat $dir/data/prayer_maghrib)
-date=$(cat $dir/data/prayer_date)
+time=$(cat $dir/data/prayer-maghrib)
+date=$(cat $dir/data/prayer-date)
 
 notify-send --icon=$icon "20 minuta do akšama" "Akšam u $time \t\t\t\t\t\t\t\t\      ($date)"
 paplay $dir/sound/alarm.oga

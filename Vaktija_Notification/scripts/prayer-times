@@ -3,7 +3,7 @@
 arg=$1
 
 dir=/home/$USER/.config/PrayerTimes
-python $dir/python/load-prayer-times.py $USER
+python $dir/python/load_prayer_times.py $USER
 
 # loading current time
 nowHour=`date '+%H'`
@@ -31,10 +31,16 @@ do
 
     case $arg in
 
-        "--reconfigure")
+        "--help" | "-h")
+            echo HELP
+            break
+            ;;
+
+        "--configure" | "-c")
             if [ $i -eq 0 ]
             then
                 bash $dir/scripts/clean/clean-at
+                at 00:01 < /usr/local/bin/prayer-times
             fi
             # scheduling notifications 20min earlier
             allPrayerMinutes=$((allPrayerMinutes - 20))
@@ -42,24 +48,39 @@ do
             prayerMinutes=$((allPrayerMinutes%60))
             time=`echo $prayerHour:$prayerMinutes`
             at $time < $dir/scripts/prayers-setup/$name
-            at 00:01 < /usr/local/bin/prayer-times
             ;;
 
-        "--next")
-            if [ $allPrayerMinutes -lt $allNowMinutes ]
+        "--next" | "-n")
+            if [ $allPrayerMinutes -gt $allNowMinutes ]
             then
-                continue
-            else
                 allPrayerMinutes=$((allPreyerMinutes-allNowMinutes))
                 prayerHour=$((allPrayerMinutes/60))
                 prayerMinutes=$((allPrayerMinutes%60))
                 time=`echo $prayerHour:$prayerMinutes`
                 $dir/scripts/prayers-setup/prayer-notif $name $time
+                break
+            else
+                if [ $i -eq 4 ]
+                then
+                    data=`cat $dir/data/prayer-dawn`
+                    prayerHour=`echo $data | awk '{split($0, array, ":")} END{print array[1]}'`
+                    prayerHour=`echo $prayerHour | awk '{print $1 + 0}'`
+                    prayerMinutes=`echo $data | awk '{split($0, array, ":")} END{print array[2]}'`
+                    prayerMinutes=`echo $prayerMinutes | awk '{print $1 + 0}'`
+                    allPrayerMinutes=$((prayerMinutes + prayerHour*60))
+                    allPrayerMinutes=$((24*60-allNowMinutes+allPrayerMinutes))
+                    prayerHour=$((allPrayerMinutes/60))
+                    prayerMinutes=$((allPrayerMinutes%60))
+                    time=`echo $prayerHour:$prayerMinutes`
+                    $dir/scripts/prayers-setup/prayer-notif dawn $time
+                    break
+                fi
             fi
             ;;
 
         *)
-            echo help
+            echo Type --help or -h for HELP
+            break
             ;;
     esac
 done

@@ -11,7 +11,7 @@ After=systemd-user-sessions.service
 After=network-online.target
 [Service]
 User=hllvc
-ExecStart=/usr/local/bin/prayer-times
+ExecStart=/usr/local/bin/prayer-times --reconfigure
 Restart=on-failure
 RestartSec=30
 [Install]
