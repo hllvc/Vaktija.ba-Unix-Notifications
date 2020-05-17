@@ -19,11 +19,13 @@ do
 
     # reading names and time of prayers
     name=${prayers_list[i]}
-    data=$(cat $dir/data/prayer_$name)
+    data=`cat $dir/data/prayer_$name`
 
     # spliting time to hours and minutes and converting all to minutes
     prayer_hour=`echo $data | awk '{split($0, array, ":")} END{print array[1]}'`
+    prayer_hour=`echo $prayer_hour | awk '{print $1 + 0}'`
     prayer_minutes=`echo $data | awk '{split($0, array, ":")} END{print array[2]}'`
+    prayer_minutes=`echo $prayer_minutes | awk '{print $1 + 0}'`
     all_prayer_minutes=$((prayer_minutes + prayer_hour*60))
 
     # scheduling notificationsa 20min earlier
