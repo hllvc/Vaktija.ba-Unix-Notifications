@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+    echo "Permission denied. Run as sudo!"
+    exit
+fi
+
+dir=/home/$USER/.config/PrayerTimes
+
+tar -xf PrayerTimes.tar
+mkdir $dir
+mv Vaktija_Notification/* $dir
+
+sudo echo "[Unit]
+Description=Refresh Prayer Times
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+User=hllvc
+ExecStart=/usr/local/bin/prayer-times.sh
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+" > /etc/systemd/system/prayer-times.service
+
+sudo cp $dir/scripts/prayer-times /usr/local/bin/prayer-times.sh
+sudo chmod 744 /usr/local/bin/prayer-times.sh
+sudo chmod 664 /etc/systemd/system/prayer-times.service
+systemctl daemon-reload
+systemctl enable prayer-times.service
+systemctl start prayer-times.service
