@@ -11,11 +11,23 @@ After=systemd-user-sessions.service
 After=network-online.target
 [Service]
 User=hllvc
-ExecStart=/usr/local/bin/prayertimes --reconfigure
+ExecStart=/usr/local/bin/prayertimes --configure
 Restart=on-failure
 RestartSec=30
 [Install]
 WantedBy=multi-user.target
+" > /etc/systemd/system/prayer-times.service
+
+sudo echo "[Unit]
+Description=Update prayer times at midnight
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+Unit=prayer-times.service
+
+[Install]
+WantedBy=timers.target
 " > /etc/systemd/system/prayer-times.service
 
 
@@ -23,9 +35,11 @@ sudo mv $dir/scripts/prayertimes /usr/local/bin/prayertimes
 
 sudo chmod 744 /usr/local/bin/prayertimes
 sudo chmod 664 /etc/systemd/system/prayer-times.service
+sudo chmod 664 /etc/systemd/system/prayer-times.timer
 
 sudo systemctl daemon-reload
 
 sudo systemctl enable prayer-times.service
-
+sudo systemctl enable prayer-times.timer
 sudo systemctl start prayer-times.service
+sudo systemctl start prayer-times.timer

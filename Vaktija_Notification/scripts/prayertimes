@@ -4,13 +4,6 @@ arg=$1
 
 dir=/home/$USER/.config/PrayerTimes
 
-gdate=$(cat $dir/python/date)
-if [ "$gdate" != "$dir/data/prayer-gdate" ]
-then
-    python $dir/python/load_prayer_times.py $USER
-    echo $(cat $dir/data/prayer-gdate) > $dir/python/date
-fi
-
 date=$(cat $dir/data/prayer-date)
 gdate=$(cat $dir/data/prayer-gdate)
 
@@ -41,10 +34,13 @@ do
     case $arg in
 
         "--help" | "-h")
-            echo "HELP
+            echo "______HELP______
+
+            By default, with no arguments you get first upcoming prayer.
+
             --configure, -c                 Configure all 5 daily prayer including dawn.
 
-            --next, -n                      Show next upcoming prayer via notification.
+            --date, -d                      Show current date in islamic and gregorian.
 
             --all, -a                       Print all prayer times.
 
@@ -58,7 +54,7 @@ do
             if [ $i -eq 0 ]
             then
                 bash $dir/scripts/clean/clean-at
-                at 00:01 < /usr/local/bin/prayertimes
+                python $dir/python/load_prayer_times.py $USER
             fi
             # scheduling notifications 20min earlier
             allPrayerMinutes=$((allPrayerMinutes - 20))
@@ -68,7 +64,7 @@ do
             at $time < $dir/scripts/prayers-setup/$name
             ;;
 
-        "--next" | "-n")
+        "")
             if [ $allPrayerMinutes -gt $allNowMinutes ]
             then
                 allPrayerMinutes=$((allPrayerMinutes-allNowMinutes))
