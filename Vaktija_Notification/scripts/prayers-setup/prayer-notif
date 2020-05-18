@@ -65,13 +65,14 @@ fi
 
 if (( $prayerHour < 1 ))
 then
-    notify-send --icon=$icon "$prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+    notify-send --icon=$icon "$prayerMinute $minuteWord do $name1" "$name2 u $prayerTime"
 elif (( $prayerHour == 1 || $prayerHour == 21 ))
 then
-    notify-send --icon=$icon "$prayerHour sat i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+    notify-send --icon=$icon "$prayerHour sat i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime"
 elif (( $prayerHour >= 2 && $prayerHour <= 4 || $prayerHour >= 22 && $prayerHour <= 24 ))
 then
-    notify-send --icon=$icon "$prayerHour sata i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+    notify-send --icon=$icon "$prayerHour sata i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime"
 else
-    notify-send --icon=$icon "$prayerHour sati i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+    notify-send --icon=$icon "$prayerHour sati i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime"
 fi
+paplay $dir/sound/complete.oga

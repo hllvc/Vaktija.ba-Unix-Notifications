@@ -11,6 +11,8 @@ then
     echo $(cat $dir/data/prayer-gdate) > $dir/python/date
 fi
 
+date=$(cat $dir/data/prayer-date)
+gdate=$(cat $dir/data/prayer-gdate)
 
 # loading current time
 nowHour=`date '+%H'`
@@ -105,6 +107,12 @@ do
         "--all" | "-a")
                 echo "$data ($name)"
             ;;
+
+        "--date" | "-d")
+                notify-send --icon=$dir/icon/1200x630wa.png "$date" "$gdate"
+                paplay $dir/sound/complete.oga
+                break
+                ;;
 
         "--mode-ramadan" | "-mr")
             echo ramadan > $dir/scripts/prayers-setup/mode
