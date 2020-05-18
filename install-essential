@@ -28,7 +28,7 @@ Unit=prayer-times.service
 
 [Install]
 WantedBy=timers.target
-" > /etc/systemd/system/prayer-times.service
+" > /etc/systemd/system/prayer-times.timer
 
 
 sudo mv $dir/scripts/prayertimes /usr/local/bin/prayertimes
