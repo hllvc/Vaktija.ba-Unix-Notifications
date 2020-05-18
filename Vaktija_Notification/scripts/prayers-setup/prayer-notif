@@ -24,8 +24,8 @@ case $name in
         ;;
 
     "fajr")
-        name1=sabaha
-        name2=Sabah
+        name1="izlaska sunca"
+        name2="Izlazak sunca"
         ;;
 
     "zuhr")
@@ -56,5 +56,22 @@ case $name in
 
 esac
 
-notify-send --icon=$icon "$prayerHour sata i $prayerMinute minuta do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
-paplay $dir/sound/alarm.oga
+if (( $prayerMinute >= 2 && $prayerMinute <= 4 || $prayerMinute >=22 && $prayerMinute <= 24 || $prayerMinute >=32 && $prayerMinute <= 34 || $prayerMinute >=42 && $prayerMinute <= 44 || $prayerMinute >=52 && $prayerMinute <= 54))
+then
+    minuteWord=minute
+else
+    minuteWord=minuta
+fi
+
+if (( $prayerHour < 1 ))
+then
+    notify-send --icon=$icon "$prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+elif (( $prayerHour == 1 || $prayerHour == 21 ))
+then
+    notify-send --icon=$icon "$prayerHour sat i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+elif (( $prayerHour >= 2 && $prayerHour <= 4 || $prayerHour >= 22 && $prayerHour <= 24 ))
+then
+    notify-send --icon=$icon "$prayerHour sata i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+else
+    notify-send --icon=$icon "$prayerHour sati i $prayerMinute $minuteWord do $name1" "$name2 u $prayerTime \t\t\t\t\t\t\t\t\      ($date)"
+fi

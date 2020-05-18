@@ -3,7 +3,14 @@
 arg=$1
 
 dir=/home/$USER/.config/PrayerTimes
-python $dir/python/load_prayer_times.py $USER
+
+gdate=$(cat $dir/python/date)
+if [ "$gdate" != "$dir/data/prayer-gdate" ]
+then
+    python $dir/python/load_prayer_times.py $USER
+    echo $(cat $dir/data/prayer-gdate) > $dir/python/date
+fi
+
 
 # loading current time
 nowHour=`date '+%H'`
@@ -33,12 +40,14 @@ do
 
         "--help" | "-h")
             echo "HELP
-            --configure     |   -c              Configure all 5 daily prayer including dawn.
+            --configure, -c                 Configure all 5 daily prayer including dawn.
 
-            --next          |   -n              Show next upcoming prayer via notification.
+            --next, -n                      Show next upcoming prayer via notification.
 
-            --mode-ramadan  |   -mr             Change modes. If ramadan set you will see time until iftar
-            --mode-default  |   -md             and time until sehoor ends.
+            --all, -a                       Print all prayer times.
+
+            --mode-ramadan, -mr             Change modes. If ramadan set you will see time until iftar
+            --mode-default, -md             and time until sehoor ends.
             "
             break
             ;;
@@ -60,7 +69,7 @@ do
         "--next" | "-n")
             if [ $allPrayerMinutes -gt $allNowMinutes ]
             then
-                allPrayerMinutes=$((allPreyerMinutes-allNowMinutes))
+                allPrayerMinutes=$((allPrayerMinutes-allNowMinutes))
                 prayerHour=$((allPrayerMinutes/60))
                 prayerMinutes=$((allPrayerMinutes%60))
                 time=`echo $prayerHour:$prayerMinutes`
@@ -69,20 +78,32 @@ do
             else
                 if [ $i -eq 4 ]
                 then
+                    ishaMinutes=$allPrayerMinutes
                     data=`cat $dir/data/prayer-dawn`
                     prayerHour=`echo $data | awk '{split($0, array, ":")} END{print array[1]}'`
                     prayerHour=`echo $prayerHour | awk '{print $1 + 0}'`
                     prayerMinutes=`echo $data | awk '{split($0, array, ":")} END{print array[2]}'`
                     prayerMinutes=`echo $prayerMinutes | awk '{print $1 + 0}'`
                     allPrayerMinutes=$((prayerMinutes + prayerHour*60))
-                    allPrayerMinutes=$((24*60-allNowMinutes+allPrayerMinutes))
+                    if (($allNowMinutes <= 24*60 && $allNowMinutes >= $ishaMinutes))
+                    then
+                        allPrayerMinutes=$((24*60-allNowMinutes+allPrayerMinutes))
+                    else
+                    echo $ishaMinutes
+                        allPrayerMinutes=$((allPrayerMinutes-allNowMinutes))
+                    fi
                     prayerHour=$((allPrayerMinutes/60))
                     prayerMinutes=$((allPrayerMinutes%60))
                     time=`echo $prayerHour:$prayerMinutes`
                     $dir/scripts/prayers-setup/prayer-notif dawn $time
                     break
                 fi
+                continue
             fi
+            ;;
+
+        "--all" | "-a")
+                echo "$data ($name)"
             ;;
 
         "--mode-ramadan" | "-mr")
