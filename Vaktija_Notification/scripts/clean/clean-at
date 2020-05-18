@@ -1,4 +1,0 @@
-#!/bin/bash
-
-ids=`atq | awk '{ print $1 }'`
-atrm $ids

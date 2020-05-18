@@ -34,26 +34,40 @@ do
     case $arg in
 
         "--help" | "-h")
-            echo "______HELP______
+            echo "Usage: prayertimes [OPTION]
+By default, with no arguments you get first upcoming
 
-            By default, with no arguments you get first upcoming prayer.
+Examples:
+    prayertimes --mode-ramadan  # Changes mode to ramadan mode.
+                                  Insted of dawn and maghrib 
+                                  it will be shown sahoor and iftar
+    prayertimes --clear         # Clears all scheduled notifications
 
-            --configure, -c                 Configure all 5 daily prayer including dawn.
+OPTIONS:
 
-            --date, -d                      Show current date in islamic and gregorian.
+    --configure, -c                 Configure all 5 daily prayer including dawn.
 
-            --all, -a                       Print all prayer times.
+    --date, -d                      Show current date in islamic and gregorian.
 
-            --mode-ramadan, -mr             Change modes. If ramadan set you will see time until iftar
-            --mode-default, -md             and time until sehoor ends.
-            "
+    --all, -a                       Print all prayer times.
+
+    --clear                         Clear all schedule.
+
+    --mode-ramadan, -mr             Change modes. If ramadan set you will see
+    --mode-default, -md             time until iftar and time until sehoor ends."
             break
+            ;;
+
+        "--clear")
+                ids=`atq | awk '{ print $1 }'`
+                atrm $ids
+                break
             ;;
 
         "--configure" | "-c")
             if [ $i -eq 0 ]
             then
-                bash $dir/scripts/clean/clean-at
+                bash /usr/local/bin/prayertimes --clear
                 python $dir/python/load_prayer_times.py $USER
             fi
             # scheduling notifications 20min earlier
