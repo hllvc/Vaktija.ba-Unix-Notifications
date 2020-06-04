@@ -2,7 +2,8 @@ import json,requests,sys
 
 username=sys.argv[1]
 
-content = requests.get("https://api.vaktija.ba/vaktija/v1/14")
+content = requests.get("https://api.vaktija.ba/vaktija/v1/93")
+# 14 = Brcko
 prayer_times = json.loads(content.content)
 
 with open("/home/" + username + "/.config/PrayerTimes/data/prayer-location", "w+") as the_file:

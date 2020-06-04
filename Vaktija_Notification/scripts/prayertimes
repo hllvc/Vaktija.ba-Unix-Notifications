@@ -79,7 +79,7 @@ OPTIONS:
             ;;
 
         "")
-            if [ $allPrayerMinutes -gt $allNowMinutes ]
+            if (($allPrayerMinutes > $allNowMinutes && $allPrayerMinutes < 24*60))
             then
                 allPrayerMinutes=$((allPrayerMinutes-allNowMinutes))
                 prayerHour=$((allPrayerMinutes/60))
@@ -88,7 +88,7 @@ OPTIONS:
                 $dir/scripts/prayers-setup/prayer-notif $name $time
                 break
             else
-                if [ $i -eq 4 ]
+                if [ $i -eq 5 ]
                 then
                     ishaMinutes=$allPrayerMinutes
                     data=`cat $dir/data/prayer-dawn`
