@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm -Rf /home/$USER/.config/PrayerTimes/
+systemctl disable prayer-times.service
+systemctl disable prayer-times.timer
+sudo rm /etc/systemd/system/prayer-times.service /usr/local/bin/prayertimes /etc/systemd/system/prayer-times.timer
