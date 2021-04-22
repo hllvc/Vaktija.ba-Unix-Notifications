@@ -39,7 +39,7 @@ By default, with no arguments you get first upcoming
 
 Examples:
     prayertimes --mode-ramadan  # Changes mode to ramadan mode.
-                                  Insted of dawn and maghrib 
+                                  Insted of dawn and maghrib
                                   it will be shown sahoor and iftar
     prayertimes --clear         # Clears all scheduled notifications
 
@@ -140,5 +140,3 @@ OPTIONS:
             ;;
     esac
 done
-
-

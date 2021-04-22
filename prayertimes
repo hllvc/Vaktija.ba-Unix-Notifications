@@ -1,0 +1,8 @@
+#!/bin/sh
+
+dirpath="/data"
+
+if [[ ! -d $dirpath ]]; then
+	node pick-town.js
+	node get-town-data.js
+fi

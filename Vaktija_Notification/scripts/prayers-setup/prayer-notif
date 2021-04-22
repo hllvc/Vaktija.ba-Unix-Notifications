@@ -13,8 +13,8 @@ date=`cat $dir/data/prayer-date`
 case $name in
 
     "dawn")
-        if [ "$mode" == "ramadan" ]
-        then 
+        if [[  $mode = "ramadan" ]]
+        then
             name1="kraja sehura"
             name2="Kraj sehura"
         else
@@ -32,7 +32,7 @@ case $name in
         name1=podne
         name2=Podne
         ;;
-    
+
     "asr")
         name1=ikindije
         name2=Ikindija

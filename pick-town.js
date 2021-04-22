@@ -7,14 +7,16 @@ const readline = require("readline").createInterface({
   output: process.stdout,
 });
 
-const getTown = async () => {
-  const data = await fetch(`${URL}lokacije`).then((res) => res.json());
-  data.forEach((town, index) => {
-    console.log(`[${index}] ${town}`);
-  });
+const fetchdata = async () => {
+  data = await fetch(`${URL}lokacije`).then((res) => res.json());
+  picktown();
+};
+
+const picktown = () => {
+  data.map((town, index) => console.log(`[ ${index} ] ${town}`));
   readline.question("\nChoose town?\n> ", (id) => {
     town = data[id];
-    console.log(`\nYou picked ${town}.\n`);
+    console.log(`\nYou picked ${town}.`);
     readline.close();
     let towndata = {
       id: id,
@@ -23,21 +25,27 @@ const getTown = async () => {
       vakat: [],
     };
     try {
-      if (!fs.existsSync(path.join(__dirname, "/data"))) {
-        fs.mkdirSync(path.join(__dirname, "/data"));
+      if (!fs.existsSync(dirpath)) {
+        fs.mkdirSync(dirpath);
+        console.log("\nCreating data folder ...");
       }
     } catch (err) {
       console.log(err);
     }
     let jsondata = JSON.stringify(towndata);
     try {
-      fs.writeFileSync(path.join(__dirname, "/data/town-data.json"), jsondata);
+      fs.writeFileSync(filepath, jsondata);
+      console.log("\nSaving data ...");
     } catch (err) {
       console.log(err);
     }
-    console.log("Saving data ...");
   });
 };
 
-var URL = "https://api.vaktija.ba/vaktija/v1/";
-getTown();
+const URL = "https://api.vaktija.ba/vaktija/v1/";
+const dirpath = path.join(__dirname, "/data");
+const filepath = path.join(dirpath, "/town-data.json");
+var data = {};
+
+console.log("Fetching data ...\n");
+fetchdata();

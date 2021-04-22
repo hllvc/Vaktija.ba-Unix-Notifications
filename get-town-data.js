@@ -9,12 +9,14 @@ const fetchTownInfo = async () => {
 };
 
 var id;
-var URL = "https://api.vaktija.ba/vaktija/v1/";
+const URL = "https://api.vaktija.ba/vaktija/v1/";
+const filepath = path.join(__dirname, "/data/town-data.json");
 
 try {
-  const rawdata = fs.readFileSync(path.join(__dirname, "/data/town-data.json"));
+  const rawdata = fs.readFileSync(filepath);
   const data = JSON.parse(rawdata);
   id = data.id;
+  console.log("\nFetching town preferences ...");
   fetchTownInfo();
 } catch (err) {
   console.log(err);
