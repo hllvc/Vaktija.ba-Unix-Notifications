@@ -1,8 +1,19 @@
 #!/bin/sh
 
-dirpath="/data"
+IFS='='
+read -a env <<< $(cat .env | grep DIR_PATH)
+dirpath=/home/$USER${env[1]}
+filepath="$dirpath/data/town-data.json"
 
 if [[ ! -d $dirpath ]]; then
+	mkdir -v $dirpath
 	node pick-town.js
 	node get-town-data.js
+elif [[ $1 = "clear" ]]; then
+	rm -rfv $dirpath
+	exit
 fi
+
+alltimes=$(jq -j '.vakat[]' $filepath)
+town=$(jq -j '.lokacija' $filepath)
+date=$(jq -j '.datum.greg' $filepath)
