@@ -1,19 +1,40 @@
 #!/bin/sh
 
 IFS='='
-read -a env <<< $(cat .env | grep DIR_PATH)
+read -ra env <<< $(cat .env | grep DIR_PATH)
 dirpath=/home/$USER${env[1]}
 filepath="$dirpath/data/town-data.json"
 
+iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
+icon="$dirpath/data/icon.svg"
+
 if [[ ! -d $dirpath ]]; then
+	# echo "Downloading necessary packages ..."
+	# sudo pacman -S at notify-send jq
 	mkdir -v $dirpath
 	node pick-town.js
 	node get-town-data.js
+	echo -e "\nDownloading icon ...\n"
+	wget -O $icon $iconurl
+	echo -e "Icon downloaded ..."
 elif [[ $1 = "clear" ]]; then
 	rm -rfv $dirpath
 	exit
 fi
 
-alltimes=$(jq -j '.vakat[]' $filepath)
+rawtimes=( $(jq '.vakat[]' $filepath) )
 town=$(jq -j '.lokacija' $filepath)
-date=$(jq -j '.datum.greg' $filepath)
+date=$(jq -j '.datum[1]' $filepath)
+
+for index in ${!alltimes[@]}; do
+	echo "$index ${alltimes[index]}"
+done
+
+currentdate=$(date "+%R")
+for reminder in ${reminders[@]}; do
+	if [[ $reminder -lt $currentdate ]]; then
+		echo "time passed"
+	else
+		"upcoming $remider"
+	fi
+done

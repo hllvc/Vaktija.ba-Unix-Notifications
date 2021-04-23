@@ -6,22 +6,22 @@ require("dotenv").config();
 
 const fetchdata = async () => {
   const data = await fetch(`${URL}${id}`).then(res => res.json());
-  let detaildata = {
-    ...data,
-    datum: {
-      hijr: data.datum[0],
-      greg: data.datum[1],
-    },
-    vakat: {
-      zora: data.vakat[0],
-      izlazak: data.vakat[1],
-      podne: data.vakat[2],
-      ikindija: data.vakat[3],
-      aksam: data.vakat[4],
-      jacija: data.vakat[5],
-    },
-  };
-  let jsondata = JSON.stringify(detaildata);
+  // let detaildata = {
+  //   ...data,
+  //   datum: {
+  //     hijr: data.datum[0],
+  //     greg: data.datum[1],
+  //   },
+  //   vakat: {
+  //     zora: data.vakat[0],
+  //     izlazak: data.vakat[1],
+  //     podne: data.vakat[2],
+  //     ikindija: data.vakat[3],
+  //     aksam: data.vakat[4],
+  //     jacija: data.vakat[5],
+  //   },
+  // };
+  let jsondata = JSON.stringify(data);
   fs.writeFileSync(filepath, jsondata);
 };
 
