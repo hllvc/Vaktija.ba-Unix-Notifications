@@ -30,9 +30,6 @@ const picktown = () => {
     }
     let towndata = {
       id: id,
-      lokacija: "",
-      datum: [],
-      vakat: [],
     };
     let jsondata = JSON.stringify(towndata);
     try {

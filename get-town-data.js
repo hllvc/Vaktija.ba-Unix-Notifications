@@ -5,46 +5,49 @@ const os = require("os");
 require("dotenv").config();
 
 const fetchdata = async () => {
-  let data = await fetch(`${URL}${id}`).then(res => res.json());
-  let date = new Date();
-  data = {
+  const data = await fetch(`${URL}${id}`).then(res => res.json());
+  let rawdata = {
     ...data,
-    at: data.vakat.map(texttime => {
-      const splittime = texttime.split(":");
-      date.setHours(splittime[0] - 1);
-      date.setMinutes(splittime[1]);
-      date.setSeconds("00");
-      const time = date.getTime() - Date.now();
-      if (time < 0) return null;
-      else return new Date(time).toTimeString().split(" ")[0];
-    }),
+    vakat: ["Zora", "Izlazak sunca", "Podne", "Ikindija", "Akšam", "Jacija"],
   };
-  // let detaildata = {
-  //   ...data,
-  //   datum: {
-  //     hijr: data.datum[0],
-  //     greg: data.datum[1],
-  //   },
-  //   vakat: {
-  //     zora: data.vakat[0],
-  //     izlazak: data.vakat[1],
-  //     podne: data.vakat[2],
-  //     ikindija: data.vakat[3],
-  //     aksam: data.vakat[4],
-  //     jacija: data.vakat[5],
-  //   },
-  // };
-  let jsondata = JSON.stringify(data);
-  fs.writeFileSync(filepath, jsondata);
+  let jsondata = JSON.stringify(rawdata);
+  fs.writeFileSync(tdatapath, jsondata);
+  let date = new Date();
+  rawdata = {
+    vakat: {
+      until: data.vakat.map(texttime => {
+        const splittime = texttime.split(":");
+        date.setHours(splittime[0]);
+        date.setMinutes(splittime[1]);
+        date.setSeconds("00");
+        const time = date.getTime() - Date.now();
+        let reminder = new Date(time);
+        reminder.setHours(reminder.getHours() - 1);
+        if (time < 0) return null;
+        return reminder.toTimeString().split(" ")[0];
+      }),
+      at: [
+        data.vakat[0],
+        data.vakat[1],
+        data.vakat[2],
+        data.vakat[3],
+        data.vakat[4],
+        data.vakat[5],
+      ],
+    },
+  };
+  jsondata = JSON.stringify(rawdata);
+  fs.writeFileSync(reminderspath, jsondata);
 };
 
 var id;
 const URL = process.env.URL;
 const dirpath = path.join(os.homedir(), process.env.DIR_PATH);
-const filepath = path.join(dirpath, "/data/town-data.json");
+const tdatapath = path.join(dirpath, "/data/town-data.json");
+const reminderspath = path.join(dirpath, "/data/reminders.json");
 
 try {
-  const rawdata = fs.readFileSync(filepath);
+  const rawdata = fs.readFileSync(tdatapath);
   const data = JSON.parse(rawdata);
   id = data.id;
   console.log("\nFetching town preferences ...");
