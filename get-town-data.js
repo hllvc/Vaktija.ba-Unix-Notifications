@@ -5,7 +5,20 @@ const os = require("os");
 require("dotenv").config();
 
 const fetchdata = async () => {
-  const data = await fetch(`${URL}${id}`).then(res => res.json());
+  let data = await fetch(`${URL}${id}`).then(res => res.json());
+  let date = new Date();
+  data = {
+    ...data,
+    at: data.vakat.map(texttime => {
+      const splittime = texttime.split(":");
+      date.setHours(splittime[0] - 1);
+      date.setMinutes(splittime[1]);
+      date.setSeconds("00");
+      const time = date.getTime() - Date.now();
+      if (time < 0) return null;
+      else return new Date(time).toTimeString().split(" ")[0];
+    }),
+  };
   // let detaildata = {
   //   ...data,
   //   datum: {

@@ -1,40 +1,79 @@
 #!/bin/sh
 
+oldIFS=$IFS
 IFS='='
 read -ra env <<< $(cat .env | grep DIR_PATH)
+IFS=$oldIFS
 dirpath=/home/$USER${env[1]}
 filepath="$dirpath/data/town-data.json"
 
 iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
 icon="$dirpath/data/icon.svg"
 
+loaddata() {
+	node get-town-data.js
+}
+
+sendnotif() {
+	time=$1
+	town=$2
+	date=$3
+	notify-send.sh "Vaktija.ba" "in $time" \
+		-i $icon \
+    -d "open https://vaktija.ba 'Default Action'" \
+    -o "Snooze 5 min:notify-send.sh 'Delayed 5 minutes'" \
+		-o "Snooze 10 min:notify-send.sh 'Delayed 10 minutes'" \
+    # -l "notify-send.sh 'Close Action'"
+
+}
+
 if [[ ! -d $dirpath ]]; then
 	# echo "Downloading necessary packages ..."
-	# sudo pacman -S at notify-send jq
+	# sudo yay -S at notify-send.sh jq
 	mkdir -v $dirpath
 	node pick-town.js
-	node get-town-data.js
+	loaddata
 	echo -e "\nDownloading icon ...\n"
 	wget -O $icon $iconurl
 	echo -e "Icon downloaded ..."
 elif [[ $1 = "clear" ]]; then
 	rm -rfv $dirpath
 	exit
+elif [[ $1 = "current" ]]; then
+	loaddata
+	town=$(jq -j '.lokacija' $filepath)
+	date=$(jq -j '.datum[1]' $filepath)
+	jq -r '.at[]' $filepath > $dirpath/data/rawdata
+	rawdata="$dirpath/data/rawdata"
+	while read line; do
+		times+=( $line )
+	done < $rawdata
+	rm $dirpath/data/rawdata
+	for time in ${times[@]}; do
+		if [[ ! $time = "null" ]]; then
+			sendnotif $time $town $date
+			break
+		fi
+	done
 fi
 
-rawtimes=( $(jq '.vakat[]' $filepath) )
-town=$(jq -j '.lokacija' $filepath)
-date=$(jq -j '.datum[1]' $filepath)
-
-for index in ${!alltimes[@]}; do
-	echo "$index ${alltimes[index]}"
-done
-
-currentdate=$(date "+%R")
-for reminder in ${reminders[@]}; do
-	if [[ $reminder -lt $currentdate ]]; then
-		echo "time passed"
-	else
-		"upcoming $remider"
-	fi
-done
+# currentdate=$(date "+%H:%_M:%_S")
+# for time in ${times[@]}; do
+# 	hours=$(( $(date -d "$time" "+%H") - $(date -d "$currentdate" "+%H") ))
+# 	minutes=$(( $(date -d "$time" "+%_M") - $(date -d "$currentdate" "+%_M") ))
+# 	seconds=$(( 60 - $(date -d "$currentdate" "+%_S") ))
+# 	if [[ $seconds -eq 60 ]]; then seconds=00; fi
+# 	if [[ $hours -lt 0 ]]; then
+# 		hours=$( expr 24 + $hours )
+# 	fi
+# 	if [[ $minutes -lt 0 ]]; then
+# 		minutes=$( expr 60 + $minutes )
+# 		hours=$(expr $hours - 1)
+# 	fi
+# 	minutes=$(expr $minutes - 1)
+# 	if [[ $hours -eq 24 ]]; then hours=00; fi
+# 	if [[ ! $hours -lt 0 ]] && [[ ! $minutes -lt 0 ]]; then
+# 		diff=$(date -d "$hours:$minutes:$seconds" "+%T")
+# 		echo "$time - $diff"
+# 	fi
+# done
