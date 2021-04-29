@@ -13,8 +13,8 @@ const data = JSON.parse(rawdata);
 times = data.vakat.at;
 let date = new Date();
 let newdata = {
-  ...data,
   vakat: {
+    ...data.vakat,
     until: times.map(texttime => {
       const splittime = texttime.split(":");
       date.setHours(splittime[0]);

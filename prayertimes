@@ -14,9 +14,9 @@ icon="$dirpath/data/icon.svg"
 configuretimetext() {
 	name=$2
 	hours=$(date -d "$1" "+%_H")
-	# hours=""
+	hours=""
 	minutes=$(date -d "$1" "+%_M")
-	# minutes=""
+	minutes=""
 	seconds=$(date -d "$1" "+%_S")
 	if [[ $hours -eq 0 ]]; then
 		hours=""
@@ -51,18 +51,25 @@ configuretimetext() {
 		elif [[ $seconds < 10 ]]; then
 			seconds="$(date -d "$time" "+%_S sekundi")"
 		else
-			seconds="$(date -d "$time" "+ %_S sekundi")"
+			modified=false
+			for (( sec = 21; sec < 60; sec+=10 )); do
+				if [[ $seconds -eq $sec ]]; then
+					seconds="$(date -d "$time" "+ %_S sekundu")"
+					modified=true
+					break
+				fi
+			done
+			for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
+				if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
+					seconds="$(date -d "$time" "+ %_S sekunde")"
+					modified=true
+					break
+				fi
+			done
+			if [[ $modified = false ]]; then
+				seconds="$(date -d "$time" "+ %_S sekundi")"
+			fi
 		fi
-		# for (( sec = 21; sec < 60; sec+=10 )); do
-		# 	if [[ $seconds -eq $sec ]]; then
-		# 		seconds="$(date -d "$time" "+ %_S sekundu")"
-		# 	fi
-		# done
-		# for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
-		# 	if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
-		# 		seconds="$(date -d "$time" "+ %_S sekunde")"
-		# 	fi
-		# done
 		notifbody="$name za$seconds"
 	elif [[ $hours = "" ]]; then
 		notifbody="$name za$minutes"
@@ -111,10 +118,9 @@ elif [[ $1 = "current" ]]; then
 	# rm $rawdata
 	jq -r '.vakat[]' $tdatapath > $rawdata
 	while read line; do
-		echo $line
 		prayers+=( "$line" )
 	done < $rawdata
-	# rm $rawdata
+	rm $rawdata
 	for index in ${!times[@]}; do
 		if [[ ! ${times[$index]} = "null" ]]; then
 			sendnotif ${prayers[$index]} ${times[$index]}
