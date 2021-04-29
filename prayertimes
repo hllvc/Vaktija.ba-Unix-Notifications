@@ -5,6 +5,8 @@ tdatapath="$dirpath/data/town-data.json"
 rdatapath="$dirpath/data/reminders.json"
 scriptspath="$dirpath/scripts"
 
+repourl=https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main
+
 iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
 icon="$dirpath/data/icon.svg"
 
@@ -94,10 +96,10 @@ if [[ ! -d $dirpath ]]; then
 	# sudo yay -S at notify-send.sh jq
 	mkdir -v $dirpath
 	mkdir -v $scriptspath
-	wget -O $scriptspath/pick-town.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/pick-town.js
-	wget -O $scriptspath/get-town-data.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/get-town-data.js
-	wget -O $scriptspath/calculate-reminders.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/calculate-reminders.js
-	wget -O $scriptspath/.env https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/.env
+	wget -O $scriptspath/pick-town.js $repourl/scripts/pick-town.js
+	wget -O $scriptspath/get-town-data.js $repourl/scripts/get-town-data.js
+	wget -O $scriptspath/calculate-reminders.js $repourl/scripts/calculate-reminders.js
+	wget -O $scriptspath/.env $repourl/scripts/.env
 	cd $scriptspath; npm install node-fetch dotenv --save;
 	node $scriptspath/pick-town.js
 	node $scriptspath/get-town-data.js
