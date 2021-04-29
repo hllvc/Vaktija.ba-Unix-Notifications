@@ -1,22 +1,17 @@
 #!/bin/sh
 
-oldIFS=$IFS
-IFS='='
-read -ra env <<< $(cat .env | grep DIR_PATH)
-IFS=$oldIFS
-dirpath=/home/$USER${env[1]}
+dirpath=/home/$USER/.config/prayertimes
 tdatapath="$dirpath/data/town-data.json"
-reminderspath="$dirpath/data/reminders.json"
+rdatapath="$dirpath/data/reminders.json"
+scriptspath="$dirpath/scripts"
 
 iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
 icon="$dirpath/data/icon.svg"
 
 configuretimetext() {
-	name=$2
+	name="$2"
 	hours=$(date -d "$1" "+%_H")
-	hours=""
 	minutes=$(date -d "$1" "+%_M")
-	minutes=""
 	seconds=$(date -d "$1" "+%_S")
 	if [[ $hours -eq 0 ]]; then
 		hours=""
@@ -81,10 +76,10 @@ configuretimetext() {
 }
 
 sendnotif() {
-	name=$1
+	name="$1"
 	time=$2
 	notifbody=""
-	configuretimetext $time $name
+	configuretimetext $time "$name"
 	# notifbody=$(configuretimetext $time $name)
 	notify-send.sh "Vaktija.ba" "$notifbody" \
 		-i $icon \
@@ -98,36 +93,45 @@ if [[ ! -d $dirpath ]]; then
 	# echo "Downloading necessary packages ..."
 	# sudo yay -S at notify-send.sh jq
 	mkdir -v $dirpath
-	node pick-town.js
-	node get-town-data.js
+	mkdir -v $scriptspath
+	wget -O $scriptspath/pick-town.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/pick-town.js
+	wget -O $scriptspath/get-town-data.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/get-town-data.js
+	wget -O $scriptspath/calculate-reminders.js https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/calculate-reminders.js
+	wget -O $scriptspath/.env https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/.env
+	cd $scriptspath; npm install node-fetch dotenv --save;
+	node $scriptspath/pick-town.js
+	node $scriptspath/get-town-data.js
 	echo -e "\nDownloading icon ...\n"
 	wget -O $icon $iconurl
 	echo -e "Icon downloaded ..."
-elif [[ $1 = "clear" ]]; then
+fi
+if [[ $1 = "clear" ]]; then
 	rm -rfv $dirpath
 	exit
-elif [[ $1 = "current" ]]; then
-	node calculate-reminders.js
-	# town=$(jq -j '.lokacija' $tdatapath)
-	# date=$(jq -j '.datum[1]' $tdatapath)
-	rawdata="$dirpath/data/rawdata"
-	jq -r '.vakat.until[]' $reminderspath > $rawdata
-	while read line; do
-		times+=( $line )
-	done < $rawdata
-	# rm $rawdata
-	jq -r '.vakat[]' $tdatapath > $rawdata
-	while read line; do
-		prayers+=( "$line" )
-	done < $rawdata
-	rm $rawdata
-	for index in ${!times[@]}; do
-		if [[ ! ${times[$index]} = "null" ]]; then
-			sendnotif ${prayers[$index]} ${times[$index]}
-			break
-		fi
-	done
+elif [[ $1 = "fetch" ]]; then
+	node $scriptspath/get-town-data.js
 fi
+
+node $scriptspath/calculate-reminders.js
+# town=$(jq -j '.lokacija' $tdatapath)
+# date=$(jq -j '.datum[1]' $tdatapath)
+rawdata="$dirpath/data/rawdata"
+jq -r '.vakat.until[]' $rdatapath > $rawdata
+while read line; do
+	times+=( $line )
+done < $rawdata
+# rm $rawdata
+jq -r '.vakat[]' $tdatapath > $rawdata
+while read line; do
+	prayers+=( "$line" )
+done < $rawdata
+rm $rawdata
+for index in ${!times[@]}; do
+	if [[ ! ${times[$index]} = "null" ]]; then
+		sendnotif "${prayers[$index]}" ${times[$index]}
+		break
+	fi
+done
 
 # currentdate=$(date "+%H:%_M:%_S")
 # for time in ${times[@]}; do

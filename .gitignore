@@ -1,8 +1,5 @@
 data
-install
-install-essential
-node_modules
-package.json
-package-lock.json
-uninstall
-Vaktija_Notification
+scripts/node_modules
+scripts/package.json
+scripts/package-lock.json
+sound

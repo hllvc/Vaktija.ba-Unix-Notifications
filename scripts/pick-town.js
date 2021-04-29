@@ -42,7 +42,7 @@ const picktown = () => {
 };
 
 const URL = process.env.URL;
-const dirpath = path.join(os.homedir(), process.env.DIR_PATH);
+const dirpath = path.join(__dirname, "../");
 const datapath = path.join(dirpath, "/data");
 const filepath = path.join(datapath, "/town-data.json");
 var data = {};

@@ -30,7 +30,7 @@ const fetchdata = async () => {
 
 var id;
 const URL = process.env.URL;
-const dirpath = path.join(os.homedir(), process.env.DIR_PATH);
+const dirpath = path.join(__dirname, "../");
 const tdatapath = path.join(dirpath, "/data/town-data.json");
 const reminderspath = path.join(dirpath, "/data/reminders.json");
 

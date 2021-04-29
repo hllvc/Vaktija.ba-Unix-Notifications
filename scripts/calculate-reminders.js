@@ -5,14 +5,14 @@ const os = require("os");
 require("dotenv").config();
 
 var times = [];
-const dirpath = path.join(os.homedir(), process.env.DIR_PATH);
+const dirpath = path.join(__dirname, "../");
 const reminderspath = path.join(dirpath, "/data/reminders.json");
 
 const rawdata = fs.readFileSync(reminderspath);
 const data = JSON.parse(rawdata);
 times = data.vakat.at;
 let date = new Date();
-let newdata = {
+const newdata = {
   vakat: {
     ...data.vakat,
     until: times.map(texttime => {
