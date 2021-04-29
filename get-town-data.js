@@ -12,20 +12,8 @@ const fetchdata = async () => {
   };
   let jsondata = JSON.stringify(rawdata);
   fs.writeFileSync(tdatapath, jsondata);
-  let date = new Date();
   rawdata = {
     vakat: {
-      until: data.vakat.map(texttime => {
-        const splittime = texttime.split(":");
-        date.setHours(splittime[0]);
-        date.setMinutes(splittime[1]);
-        date.setSeconds("00");
-        const time = date.getTime() - Date.now();
-        let reminder = new Date(time);
-        reminder.setHours(reminder.getHours() - 1);
-        if (time < 0) return null;
-        return reminder.toTimeString().split(" ")[0];
-      }),
       at: [
         data.vakat[0],
         data.vakat[1],

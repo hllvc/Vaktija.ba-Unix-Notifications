@@ -11,14 +11,12 @@ reminderspath="$dirpath/data/reminders.json"
 iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
 icon="$dirpath/data/icon.svg"
 
-loaddata() {
-	node get-town-data.js
-}
-
 configuretimetext() {
 	name=$2
 	hours=$(date -d "$1" "+%_H")
+	# hours=""
 	minutes=$(date -d "$1" "+%_M")
+	# minutes=""
 	seconds=$(date -d "$1" "+%_S")
 	if [[ $hours -eq 0 ]]; then
 		hours=""
@@ -42,42 +40,43 @@ configuretimetext() {
 	else
 		minutes="$(date -d "$time" "+ %_M minuta")"
 	fi
-	if [[ $hours = "" ]]; then
-		notifbody="$name za$minutes"
-	elif [[ $minutes = "" ]]; then
-		notifbody="$name za$hours"
-	elif [[ $hours = "" ]] && [[ $minutes = "" ]]; then
+	if [[ $hours = "" ]] && [[ $minutes = "" ]]; then
 		if [[ $seconds -eq 0 ]]; then
-			seconds=""
+			notifbody="$name je sad!"
+			break
 		elif [[ $seconds -eq 1 ]]; then
 			seconds="$(date -d "$time" "+%_S sekundu")"
 		elif [[ $seconds -eq 2 ]] || [[ $seconds -eq 3 ]] || [[ $seconds -eq 4 ]]; then
 			seconds="$(date -d "$time" "+%_S sekunde")"
 		elif [[ $seconds < 10 ]]; then
-			seconds="$(date -d "$time" "+%_M sekundi")"
+			seconds="$(date -d "$time" "+%_S sekundi")"
 		else
-			seconds="$(date -d "$time" "+ %_M sekundi")"
+			seconds="$(date -d "$time" "+ %_S sekundi")"
 		fi
-		for (( sec = 21; sec < 60; sec+=10 )); do
-			if [[ $seconds -eq $sec ]]; then
-				seconds="$(date -d "$time" "+ %_S sekundu")"
-			fi
-		done
-		for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
-			if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
-				seconds="$(date -d "$time" "+ %_S sekunde")"
-			fi
-		done
+		# for (( sec = 21; sec < 60; sec+=10 )); do
+		# 	if [[ $seconds -eq $sec ]]; then
+		# 		seconds="$(date -d "$time" "+ %_S sekundu")"
+		# 	fi
+		# done
+		# for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
+		# 	if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
+		# 		seconds="$(date -d "$time" "+ %_S sekunde")"
+		# 	fi
+		# done
 		notifbody="$name za$seconds"
+	elif [[ $hours = "" ]]; then
+		notifbody="$name za$minutes"
+	elif [[ $minutes = "" ]]; then
+		notifbody="$name za$hours"
 	else
-		timebody="$name za$hours i$minutes"
+		notifbody="$name za$hours i$minutes"
 	fi
 }
 
 sendnotif() {
 	name=$1
 	time=$2
-	timebody=""
+	notifbody=""
 	configuretimetext $time $name
 	# notifbody=$(configuretimetext $time $name)
 	notify-send.sh "Vaktija.ba" "$notifbody" \
@@ -93,7 +92,7 @@ if [[ ! -d $dirpath ]]; then
 	# sudo yay -S at notify-send.sh jq
 	mkdir -v $dirpath
 	node pick-town.js
-	loaddata
+	node get-town-data.js
 	echo -e "\nDownloading icon ...\n"
 	wget -O $icon $iconurl
 	echo -e "Icon downloaded ..."
@@ -101,7 +100,7 @@ elif [[ $1 = "clear" ]]; then
 	rm -rfv $dirpath
 	exit
 elif [[ $1 = "current" ]]; then
-	loaddata
+	node calculate-reminders.js
 	# town=$(jq -j '.lokacija' $tdatapath)
 	# date=$(jq -j '.datum[1]' $tdatapath)
 	rawdata="$dirpath/data/rawdata"
@@ -109,15 +108,16 @@ elif [[ $1 = "current" ]]; then
 	while read line; do
 		times+=( $line )
 	done < $rawdata
-	rm $rawdata
+	# rm $rawdata
 	jq -r '.vakat[]' $tdatapath > $rawdata
 	while read line; do
-		prayers+=( $line )
+		echo $line
+		prayers+=( "$line" )
 	done < $rawdata
-	rm $rawdata
+	# rm $rawdata
 	for index in ${!times[@]}; do
 		if [[ ! ${times[$index]} = "null" ]]; then
-			sendnotif ${prayers[$index+1]} ${times[$index]}
+			sendnotif ${prayers[$index]} ${times[$index]}
 			break
 		fi
 	done
