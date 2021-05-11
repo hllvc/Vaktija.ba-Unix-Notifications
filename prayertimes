@@ -1,13 +1,13 @@
 #!/bin/sh
 
-dirpath=/home/$USER/.config/prayertimes
+dirpath="/home/$USER/.config/prayertimes"
 tdatapath="$dirpath/data/town-data.json"
 rdatapath="$dirpath/data/reminders.json"
 scriptspath="$dirpath/scripts"
 
-repourl=https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main
+repourl="https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main"
 
-iconurl=https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-dark.svg
+iconurl="https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-light.svg"
 icon="$dirpath/data/icon.svg"
 
 configuretimetext() {
@@ -28,9 +28,9 @@ configuretimetext() {
 	fi
 	if [[ $minutes -eq 0 ]]; then
 		minutes=""
-	elif [[ $minutes -eq 1 ]]; then
+	elif [[ $minutes -eq 1 ]] || [[ $minutes -eq 21 ]]; then
 		minutes="$(date -d "$time" "+%_M minutu")"
-	elif [[ $minutes -eq 2 ]] || [[ $minutes -eq 3 ]] || [[ $minutes -eq 4 ]]; then
+	elif [[ $minutes -eq 2 ]] || [[ $minutes -eq 3 ]] || [[ $minutes -eq 4 ]] || [[ $minutes -eq 22 ]] || [[ $minutes == 23 ]]; then
 		minutes="$(date -d "$time" "+%_M minute")"
 	elif [[ $minutes < 10 ]]; then
 		minutes="$(date -d "$time" "+%_M minuta")"
