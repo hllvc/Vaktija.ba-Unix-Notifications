@@ -3,8 +3,8 @@
 ### How to install?
 Follow these instructions
 ```
-sudo wget -O https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes \
-	/usr/bin/prayertimes
+sudo wget -O /usr/bin/prayertimes \
+	https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
 ```
 You could set your custom location but here is set to `/usr/bin/prayertimes`.
 
