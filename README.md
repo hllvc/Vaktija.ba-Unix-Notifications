@@ -4,12 +4,15 @@
 Follow these instructions
 ```
 sudo wget -O /usr/bin/prayertimes \
-	https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes; \
-sudo chmod a+x /usr/bin/prayertimes
+	https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
 ```
 You could set your custom location but here is set to `/usr/bin/prayertimes`.
 
 After downloading script you should set it's permission like this
+
+```
+sudo chmod a+x /usr/bin/prayertimes
+```
 
 and then run it in terminal with `prayertimes`.
 
