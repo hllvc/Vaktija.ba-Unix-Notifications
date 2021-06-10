@@ -85,10 +85,9 @@ sendnotif() {
 	# notifbody=$(configuretimetext $time $name)
 	notify-send.sh "Vaktija.ba" "$notifbody" \
 		-i $icon \
-    # -d "firefox www.vaktija.ba 'Default Action'" \
+    -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
     # -o "Snooze 5 min:notify-send.sh 'Delayed 5 minutes'" \
 		# -o "Snooze 10 min:notify-send.sh 'Delayed 10 minutes'" \
-    # -l "notify-send.sh 'Close Action'"
 }
 
 if [[ ! -d $dirpath ]]; then
