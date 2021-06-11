@@ -111,6 +111,10 @@ if [[ $1 = "clear" ]]; then
 	exit
 elif [[ $1 = "fetch" ]]; then
 	node $scriptspath/get-town-data.js
+elif [[ $1 = 'update' ]]; then
+	sudo wget -O /usr/local/bin/prayertimes \
+		https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
+	sudo chmod a+x /usr/local/bin/prayertimes
 fi
 
 node $scriptspath/calculate-reminders.js
