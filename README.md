@@ -3,7 +3,7 @@
 ### How to install?
 Follow these instructions
 ```
-sudo wget -O /usr/bin/prayertimes \
+sudo wget -O /usr/local/bin/prayertimes \
 	https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
 ```
 You could set your custom location but here is set to `/usr/bin/prayertimes`.
@@ -11,7 +11,7 @@ You could set your custom location but here is set to `/usr/bin/prayertimes`.
 After downloading script you should set it's permission like this
 
 ```
-sudo chmod a+x /usr/bin/prayertimes
+sudo chmod a+x /usr/local/bin/prayertimes
 ```
 
 and then run it in terminal with `prayertimes`.
