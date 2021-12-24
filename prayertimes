@@ -1,6 +1,14 @@
 #!/bin/sh
 
-dirpath="/Users/$USER/.config/prayertimes"
+OS="$(uname)"
+
+if [[ $OS == Darwin ]]; then
+  home_folder="/Users"
+elif [[ $OS == Linux ]]; then
+  home_folder="/home"
+fi
+
+dirpath="$home_folder/$USER/.config/prayertimes"
 tdatapath="$dirpath/data/town-data.json"
 rdatapath="$dirpath/data/reminders.json"
 scriptspath="$dirpath/scripts"
@@ -10,7 +18,74 @@ repourl="https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/m
 iconurl="https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-light.svg"
 icon="$dirpath/data/icon.svg"
 
-configuretimetext() {
+configuretimetext_Linux () {
+  name="$2"
+  hours=$(date -d "$1" "+%_H")
+  minutes=$(date -d "$1" "+%_M")
+  seconds=$(date -d "$1" "+%_S")
+  if [[ $hours -eq 0 ]]; then
+    hours=""
+  elif [[ $hours -eq 1 ]] || [[ $hours -eq 21 ]]; then
+    hours="$(date -d "$time" "+%_H sat")"
+  elif [[ $hours -eq 2 ]] || [[ $hours -eq 3 ]] || [[ $hours -eq 4 ]] || [[ $hours -eq 22 ]] || [[ $hours == 23 ]]; then
+    hours="$(date -d "$time" "+%_H sata")"
+  elif [[ $hours < 10 ]]; then
+    hours="$(date -d "$time" "+%_H sati")"
+  else
+    hours="$(date -d "$time" "+ %_H sati")"
+  fi
+  if [[ $minutes -eq 0 ]]; then
+    minutes=""
+  elif [[ $minutes -eq 1 ]] || [[ $minutes -eq 21 ]]; then
+    minutes="$(date -d "$time" "+ %_M minutu")"
+  elif [[ $minutes -eq 2 ]] || [[ $minutes -eq 3 ]] || [[ $minutes -eq 4 ]] || [[ $minutes -eq 22 ]] || [[ $minutes == 23 ]]; then
+    minutes="$(date -d "$time" "+ %_M minute")"
+  elif [[ $minutes < 10 ]]; then
+    minutes="$(date -d "$time" "+%_M minuta")"
+  else
+    minutes="$(date -d "$time" "+ %_M minuta")"
+  fi
+  if [[ $hours = "" ]] && [[ $minutes = "" ]]; then
+    if [[ $seconds -eq 0 ]]; then
+      notifbody="$name je sad!"
+      break
+    elif [[ $seconds -eq 1 ]]; then
+      seconds="$(date -d "$time" "+%_S sekundu")"
+    elif [[ $seconds -eq 2 ]] || [[ $seconds -eq 3 ]] || [[ $seconds -eq 4 ]]; then
+      seconds="$(date -d "$time" "+%_S sekunde")"
+    elif [[ $seconds < 10 ]]; then
+      seconds="$(date -d "$time" "+%_S sekundi")"
+    else
+      modified=false
+      for (( sec = 21; sec < 60; sec+=10 )); do
+        if [[ $seconds -eq $sec ]]; then
+          seconds="$(date -d "$time" "+ %_S sekundu")"
+          modified=true
+          break
+        fi
+      done
+      for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
+        if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
+          seconds="$(date -d "$time" "+ %_S sekunde")"
+          modified=true
+          break
+        fi
+      done
+      if [[ $modified = false ]]; then
+        seconds="$(date -d "$time" "+ %_S sekundi")"
+      fi
+    fi
+    notifbody="$name za$seconds"
+  elif [[ $hours = "" ]]; then
+    notifbody="$name za$minutes"
+  elif [[ $minutes = "" ]]; then
+    notifbody="$name za$hours"
+  else
+    notifbody="$name za$hours i$minutes"
+  fi
+}
+
+configuretimetext_Darwin () {
 	name="$2"
 	hours=$(date -j -f "%H" "$1" "+%_H")
 	minutes=$(date -j -f "%M" "$1" "+%_M")
@@ -77,18 +152,21 @@ configuretimetext() {
 	fi
 }
 
-sendnotif() {
+sendnotif () {
 	name="$1"
 	time=$2
 	notifbody=""
-	configuretimetext $time "$name"
+	configuretimetext_$OS $time "$name"
 	# notifbody=$(configuretimetext $time $name)
-  terminal-notifier -title "Vaktija.ba" -message "$notifbody" -open "https://vaktija.ba"
-	# notify-send.sh "Vaktija.ba" "$notifbody" \
-	# 	-i $icon \
-    # -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
+  if [[ $OS == Darwin ]]; then
+    terminal-notifier -title "Vaktija.ba" -message "$notifbody" -open "https://vaktija.ba"
+  elif [[ $OS == Linux ]]; then
+	notify-send.sh "Vaktija.ba" "$notifbody" \
+		-i $icon \
+    -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
     # -o "Snooze 5 min:notify-send.sh 'Delayed 5 minutes'" \
 		# -o "Snooze 10 min:notify-send.sh 'Delayed 10 minutes'" \
+  fi
 }
 
 if [[ ! -d $dirpath ]]; then
