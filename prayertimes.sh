@@ -7,13 +7,18 @@ if [[ $os == Darwin ]]; then
 elif [[ $os == Linux ]]; then
   homedir="/home"
 fi
-echo -e "\nRecognized $os as your OS.\n"
 
 config="$homedir/$USER/.prayerconfig"
 url="https://api.vaktija.ba/vaktija/v1"
 
 initital_config () {
-  echo -e "\nFetching list of towns...\n"
+  read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
+  [[ $lang == 0 ]] && echo -e "\nCreating config file at $config"
+  [[ $lang == 1 ]] && echo -e "\nKreiranje konfiguracija u $config"
+  echo 'lang='"$lang"'' > $config
+
+  [[ $lang == 0 ]] && echo -e "\nFetching list of towns...\n"
+  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova...\n"
   old_ifs=$IFS
   IFS=$'\n'
   locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
@@ -23,9 +28,10 @@ initital_config () {
     echo "[$i] ${locations[$i]}"
   done
 
-  read -p $'\nChoose town\n> ' town
-  echo -e "\nCreating config file at $config"
+  [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
+  [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
   echo 'town='"$town"'' >> $config
+
 }
 
 check_config () {
@@ -34,6 +40,8 @@ check_config () {
   IFS="="
   town=($(grep 'town=[0-90-90-9]' $config))
   town=${town[1]}
+  lang=($(grep 'lang=[0-9]' $config))
+  lang=${lang[1]}
   IFS=$old_ifs
 }
 
@@ -83,4 +91,5 @@ for time in $prayer_times; do
   fi
 done
 
-echo "Prajer at $time, in $([[ $hours > 0 ]] && echo "$hours hours and ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 0 ]] && echo -e "\nPrajer at $time, in $([[ $hours > 0 ]] && echo "$hours hours and ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati i ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
