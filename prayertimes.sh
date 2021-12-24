@@ -1,7 +1,47 @@
 #!/bin/bash
 
+os="$(uname)"
+
+if [[ $os == Darwin ]]; then
+  homedir="/Users"
+elif [[ $os == Linux ]]; then
+  homedir="/home"
+fi
+echo -e "\nRecognized $os as your OS.\n"
+
+config="$homedir/$USER/.prayerconfig"
+url="https://api.vaktija.ba/vaktija/v1"
+
+initital_config () {
+  echo -e "\nFetching list of towns...\n"
+  old_ifs=$IFS
+  IFS=$'\n'
+  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
+  IFS=$old_ifs
+
+  for i in ${!locations[@]}; do
+    echo "[$i] ${locations[$i]}"
+  done
+
+  read -p $'\nChoose town\n> ' town
+  echo -e "\nCreating config file at $config"
+  echo 'town='"$town"'' >> $config
+}
+
+check_config () {
+  [[ ! -e $config ]] && return 1
+  old_ifs=$IFS
+  IFS="="
+  town=($(grep 'town=[0-90-90-9]' $config))
+  town=${town[1]}
+  IFS=$old_ifs
+}
+
+check_config
+[[ $? == 1 ]] && initital_config
+
 current_time="$(date +"%H:%M:%S")"
-prayer_times=($(curl -fsSL "https://api.vaktija.ba/" | jq -r ".vakat[]"))
+prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
 
 check_if_passed () {
   if ([[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
