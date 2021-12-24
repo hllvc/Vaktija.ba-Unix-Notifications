@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dirpath="/home/$USER/.config/prayertimes"
+dirpath="/Users/$USER/.config/prayertimes"
 tdatapath="$dirpath/data/town-data.json"
 rdatapath="$dirpath/data/reminders.json"
 scriptspath="$dirpath/scripts"
@@ -12,59 +12,59 @@ icon="$dirpath/data/icon.svg"
 
 configuretimetext() {
 	name="$2"
-	hours=$(date -d "$1" "+%_H")
-	minutes=$(date -d "$1" "+%_M")
-	seconds=$(date -d "$1" "+%_S")
+	hours=$(date -j -f "%H" "$1" "+%_H")
+	minutes=$(date -j -f "%M" "$1" "+%_M")
+	seconds=$(date -j -f "%S" "$1" "+%_S")
 	if [[ $hours -eq 0 ]]; then
 		hours=""
 	elif [[ $hours -eq 1 ]] || [[ $hours -eq 21 ]]; then
-		hours="$(date -d "$time" "+%_H sat")"
+		hours="$(date -j -f "%H" "$time" "+%_H sat")"
 	elif [[ $hours -eq 2 ]] || [[ $hours -eq 3 ]] || [[ $hours -eq 4 ]] || [[ $hours -eq 22 ]] || [[ $hours == 23 ]]; then
-		hours="$(date -d "$time" "+%_H sata")"
+		hours="$(date -j -f "%H" "$time" "+%_H sata")"
 	elif [[ $hours < 10 ]]; then
-		hours="$(date -d "$time" "+%_H sati")"
+		hours="$(date -j -f "%H" "$time" "+%_H sati")"
 	else
-		hours="$(date -d "$time" "+ %_H sati")"
+		hours="$(date -j -f "%H" "$time" "+ %_H sati")"
 	fi
 	if [[ $minutes -eq 0 ]]; then
 		minutes=""
 	elif [[ $minutes -eq 1 ]] || [[ $minutes -eq 21 ]]; then
-		minutes="$(date -d "$time" "+ %_M minutu")"
+		minutes="$(date -j -f "%M" "$time" "+ %_M minutu")"
 	elif [[ $minutes -eq 2 ]] || [[ $minutes -eq 3 ]] || [[ $minutes -eq 4 ]] || [[ $minutes -eq 22 ]] || [[ $minutes == 23 ]]; then
-		minutes="$(date -d "$time" "+ %_M minute")"
+		minutes="$(date -j -f "%M" "$time" "+ %_M minute")"
 	elif [[ $minutes < 10 ]]; then
-		minutes="$(date -d "$time" "+%_M minuta")"
+		minutes="$(date -j -f "%M" "$time" "+%_M minuta")"
 	else
-		minutes="$(date -d "$time" "+ %_M minuta")"
+		minutes="$(date -j -f "%M" "$time" "+ %_M minuta")"
 	fi
 	if [[ $hours = "" ]] && [[ $minutes = "" ]]; then
 		if [[ $seconds -eq 0 ]]; then
 			notifbody="$name je sad!"
 			break
 		elif [[ $seconds -eq 1 ]]; then
-			seconds="$(date -d "$time" "+%_S sekundu")"
+			seconds="$(date -j -f "%S" "$time" "+%_S sekundu")"
 		elif [[ $seconds -eq 2 ]] || [[ $seconds -eq 3 ]] || [[ $seconds -eq 4 ]]; then
-			seconds="$(date -d "$time" "+%_S sekunde")"
+			seconds="$(date -j -f "%S" "$time" "+%_S sekunde")"
 		elif [[ $seconds < 10 ]]; then
-			seconds="$(date -d "$time" "+%_S sekundi")"
+			seconds="$(date -j -f "%S" "$time" "+%_S sekundi")"
 		else
 			modified=false
 			for (( sec = 21; sec < 60; sec+=10 )); do
 				if [[ $seconds -eq $sec ]]; then
-					seconds="$(date -d "$time" "+ %_S sekundu")"
+					seconds="$(date -j -f "%S" "$time" "+ %_S sekundu")"
 					modified=true
 					break
 				fi
 			done
 			for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
 				if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
-					seconds="$(date -d "$time" "+ %_S sekunde")"
+					seconds="$(date -j -f "%S" "$time" "+ %_S sekunde")"
 					modified=true
 					break
 				fi
 			done
 			if [[ $modified = false ]]; then
-				seconds="$(date -d "$time" "+ %_S sekundi")"
+				seconds="$(date -j -f "%S" "$time" "+ %_S sekundi")"
 			fi
 		fi
 		notifbody="$name za$seconds"
@@ -83,9 +83,10 @@ sendnotif() {
 	notifbody=""
 	configuretimetext $time "$name"
 	# notifbody=$(configuretimetext $time $name)
-	notify-send.sh "Vaktija.ba" "$notifbody" \
-		-i $icon \
-    -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
+  terminal-notifier -title "Vaktija.ba" -message "$notifbody" -open "https://vaktija.ba"
+	# notify-send.sh "Vaktija.ba" "$notifbody" \
+	# 	-i $icon \
+    # -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
     # -o "Snooze 5 min:notify-send.sh 'Delayed 5 minutes'" \
 		# -o "Snooze 10 min:notify-send.sh 'Delayed 10 minutes'" \
 }
@@ -104,7 +105,7 @@ if [[ ! -d $dirpath ]]; then
 	wget -O $scriptspath/get-town-data.js $repourl/scripts/get-town-data.js
 	wget -O $scriptspath/calculate-reminders.js $repourl/scripts/calculate-reminders.js
 	wget -O $scriptspath/.env $repourl/scripts/.env
-	cd $scriptspath; npm install node-fetch dotenv --save;
+	cd $scriptspath; npm install node-fetch@^2.0.0 dotenv --save;
 	node $scriptspath/pick-town.js
 	node $scriptspath/get-town-data.js
 	echo -e "\nDownloading icon ...\n"
@@ -147,9 +148,9 @@ done
 
 # currentdate=$(date "+%H:%_M:%_S")
 # for time in ${times[@]}; do
-# 	hours=$(( $(date -d "$time" "+%H") - $(date -d "$currentdate" "+%H") ))
-# 	minutes=$(( $(date -d "$time" "+%_M") - $(date -d "$currentdate" "+%_M") ))
-# 	seconds=$(( 60 - $(date -d "$currentdate" "+%_S") ))
+# 	hours=$(( $(date -j -f "%H" "$time" "+%H") - $(date -d "$currentdate" "+%H") ))
+# 	minutes=$(( $(date -j -f "%H" "$time" "+%_M") - $(date -d "$currentdate" "+%_M") ))
+# 	seconds=$(( 60 - $(date -j -f "%H" "$currentdate" "+%_S") ))
 # 	if [[ $seconds -eq 60 ]]; then seconds=00; fi
 # 	if [[ $hours -lt 0 ]]; then
 # 		hours=$( expr 24 + $hours )
@@ -161,7 +162,7 @@ done
 # 	minutes=$(expr $minutes - 1)
 # 	if [[ $hours -eq 24 ]]; then hours=00; fi
 # 	if [[ ! $hours -lt 0 ]] && [[ ! $minutes -lt 0 ]]; then
-# 		diff=$(date -d "$hours:$minutes:$seconds" "+%T")
+# 		diff=$(date -j -f "%H" "$hours:$minutes:$seconds" "+%T")
 # 		echo "$time - $diff"
 # 	fi
 # done
