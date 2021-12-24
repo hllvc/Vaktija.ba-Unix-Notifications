@@ -11,8 +11,35 @@ fi
 config="$homedir/$USER/.prayerconfig"
 url="https://api.vaktija.ba/vaktija/v1"
 
+usage () {
+  echo -e "\nUsage: $(basename "$0") [OPTIONS] <ARG>
+
+  Where OPTIONS are:
+
+      -h)        Show this help
+      -c)        Remove config
+      -u)        Update town and data
+      -e)        Edit config file
+      -s)        Show config file
+      -l ARG)    Change language (where ARG is [en] or [ba])"
+  exit 2
+}
+
+load_config () {
+  [[ ! -e $config ]] && return 1
+  old_ifs=$IFS
+  IFS="="
+  town=($(grep 'town=[0-90-90-9]' $config))
+  town=${town[1]}
+  lang=($(grep 'lang=[0-1]' $config))
+  lang=${lang[1]}
+  IFS=$old_ifs
+}
+
 initital_config () {
-  read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
+  while [[ $lang > 1 ]] || [[ $lang < 0 ]]; do
+    read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
+  done
   [[ $lang == 0 ]] && echo -e "\nCreating config file at $config"
   [[ $lang == 1 ]] && echo -e "\nKreiranje konfiguracija u $config"
   echo 'lang='"$lang"'' > $config
@@ -28,25 +55,76 @@ initital_config () {
     echo "[$i] ${locations[$i]}"
   done
 
-  [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
-  [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
+  while [[ $town > $((${#locations[@]}-1)) ]] || [[ $town < 0 ]]; do
+    [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
+    [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
+  done
   echo 'town='"$town"'' >> $config
+  usage
 
 }
 
-check_config () {
-  [[ ! -e $config ]] && return 1
+update_town () {
+  [[ $lang == 0 ]] && echo -e "\nFetching list of towns...\n"
+  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova...\n"
   old_ifs=$IFS
-  IFS="="
-  town=($(grep 'town=[0-90-90-9]' $config))
-  town=${town[1]}
-  lang=($(grep 'lang=[0-9]' $config))
-  lang=${lang[1]}
+  IFS=$'\n'
+  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
   IFS=$old_ifs
+
+  for i in ${!locations[@]}; do
+    echo "[$i] ${locations[$i]}"
+  done
+
+  town=unset
+  while [[ $town < 0 ]] || [[ $town > $((${#locations[@]}-1)) ]]; do
+    [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
+    [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
+  done
+  sed -i'' -e 's/town=.*/town='$town'/' $config
 }
 
-check_config
+load_config
 [[ $? == 1 ]] && initital_config
+
+init=0
+while getopts 'hcuesl:' arg; do
+  case "$arg" in
+    h)
+      usage
+      ;;
+    c)
+      rm $config
+      init=2
+      ;;
+    u)
+      update_town
+      init=2
+      ;;
+    e)
+      $EDITOR $config
+      exit 2
+      ;;
+    s)
+      cat $config
+      exit 2
+      ;;
+    l)
+      if [[ $OPTARG == "en" ]]; then
+        lang=0
+      elif [[ $OPTARG == "ba" ]]; then
+        lang=1
+      else
+        usage
+      fi
+      sed -i'' -e 's/lang=[0-1]/lang='"$lang"'/' $config
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+[[ $init == 2 ]] && exit 2
 
 current_time="$(date +"%H:%M:%S")"
 prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
@@ -91,5 +169,5 @@ for time in $prayer_times; do
   fi
 done
 
-[[ $lang == 0 ]] && echo -e "\nPrajer at $time, in $([[ $hours > 0 ]] && echo "$hours hours and ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours and ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
 [[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati i ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
