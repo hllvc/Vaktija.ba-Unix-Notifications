@@ -159,7 +159,7 @@ for time in $prayer_times; do
       minutes=$((60$minutes))
       hours=$(($hours-1))
     done
-    if [[ $minutes == 1 ]]; then
+    if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
      seconds=$((60-$curr_seconds))
     fi
     break
@@ -171,5 +171,5 @@ for time in $prayer_times; do
   fi
 done
 
-[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours and ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati i ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
