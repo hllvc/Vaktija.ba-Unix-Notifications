@@ -55,7 +55,8 @@ initital_config () {
     echo "[$i] ${locations[$i]}"
   done
 
-  while [[ $town > $((${#locations[@]}-1)) ]] || [[ $town < 0 ]]; do
+  town=-1
+  while [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]; do
     [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
     [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
   done
@@ -76,10 +77,13 @@ update_town () {
     echo "[$i] ${locations[$i]}"
   done
 
-  town=unset
-  while [[ $town < 0 ]] || [[ $town > $((${#locations[@]}-1)) ]]; do
+  town=-1
+  echo $town
+  while [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]; do
     [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
     [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
+    echo $town
+    echo $((${#locations[@]}-1))
   done
   sed -i'' -e 's/town=.*/town='$town'/' $config
 }
@@ -87,7 +91,6 @@ update_town () {
 load_config
 [[ $? == 1 ]] && initital_config
 
-init=0
 while getopts 'hcuesl:' arg; do
   case "$arg" in
     h)
@@ -95,11 +98,11 @@ while getopts 'hcuesl:' arg; do
       ;;
     c)
       rm $config
-      init=2
+      exit 2
       ;;
     u)
       update_town
-      init=2
+      exit 2
       ;;
     e)
       $EDITOR $config
@@ -124,7 +127,6 @@ while getopts 'hcuesl:' arg; do
       ;;
   esac
 done
-[[ $init == 2 ]] && exit 2
 
 current_time="$(date +"%H:%M:%S")"
 prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
