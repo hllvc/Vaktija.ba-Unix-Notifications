@@ -131,7 +131,7 @@ done
 current_time="$(date +"%H:%M:%S")"
 prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
 
-check_if_passed () {
+check_if_passed_Darwin () {
   if ([[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
     ( [[ $(date -j -f "%H:%M" "$1" +"%H") == $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] && [[ $(date -j -f "%H:%M" "$1" +"%M") < $(date -j -f "%H:%M:%S" "$current_time" +"%M") ]] )) && \
     [[ $1 == ${prayer_times[0]} ]]; then
@@ -143,33 +143,81 @@ check_if_passed () {
   return 0
 }
 
-curr_hours="$(date -j -f "%H:%M:%S" "$current_time" +"%H")"
-curr_minutes="$(date -j -f "%H:%M:%S" "$current_time" +"%M")"
-curr_seconds="$(date -j -f "%H:%M:%S" "$current_time" +"%S")"
+check_if_passed_Linux () {
+	if ([[ $(date -d "$1" +"%H") < $(date -d "$current_time" +"%H") ]] || \
+		( [[ $(date -d "$1" +"%H") == $(date -d "$current_time" +"%H") ]] && [[ $(date -d "$1" +"%M") < $(date -d "$current_time" +"%M") ]] )) && \
+		[[ $1 == ${prayer_times[0]} ]] && [[ $(date -d "${prayer_times[5]}" +"%H") < $(date -d "$current_time" +"%H") ]]; then
+		return 2
+	elif [[ $(date -d "$1" +"%H") < $(date -d "$current_time" +"%H") ]] || \
+		( [[ $(date -d "$1" +"%H") == $(date -d "$current_time" +"%H") ]] && [[ $(date -d "$1" +"%M") < $(date -d "$current_time" +"%M") ]] ); then
+		return 1
+	fi
+	return 0
+}
 
-for time in $prayer_times; do
-  check_if_passed $time
-  exit_code=$?
-  if [[ $exit_code == 0 ]]; then
-    prayer_hours="$(date -j -f "%H:%M" "$time" +"%H")"
-    prayer_minutes="$(date -j -f "%H:%M" "$time" +"%M")"
-    hours=$(($prayer_hours-$curr_hours))
-    minutes=$(($prayer_minutes-$curr_minutes))
-    while [[ $minutes < 0 ]]; do
-      minutes=$((60$minutes))
-      hours=$(($hours-1))
-    done
-    if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
-     seconds=$((60-$curr_seconds))
-    fi
-    break
-  elif [[ $exit_code == 2 ]]; then
-    prayer_hours="$(date -j -f "%H:%M" "$time" +"%H")"
-    prayer_minutes="$(date -j -f "%H:%M" "$time" +"%M")"
-    hours=$((24-$curr_hours+$prayer_hours))
-    minutes=$((60-$curr_minutes+$prayer_minutes))
-  fi
-done
+Darwin () {
+	for time in $prayer_times; do
+		check_if_passed_$os $time
+		exit_code=$?
+
+		curr_hours="$(date -j -f "%H:%M:%S" "$current_time" +"%_H")"
+		curr_minutes="$(date -j -f "%H:%M:%S" "$current_time" +"%_M")"
+		curr_seconds="$(date -j -f "%H:%M:%S" "$current_time" +"%_S")"
+
+		if [[ $exit_code == 0 ]]; then
+			prayer_hours="$(date -j -f "%H:%M" "$time" +"%_H")"
+			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
+			hours=$(($prayer_hours-$curr_hours))
+			minutes=$(($prayer_minutes-$curr_minutes))
+			while [[ $minutes < 0 ]]; do
+				minutes=$((60$minutes))
+				hours=$(($hours-1))
+			done
+			if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
+				seconds=$((60-$curr_seconds))
+			fi
+			break
+		elif [[ $exit_code == 2 ]]; then
+			prayer_hours="$(date -j -f "%H:%M" "$time" +"%_H")"
+			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
+			hours=$((24-$curr_hours+$prayer_hours))
+			minutes=$((60-$curr_minutes+$prayer_minutes))
+		fi
+	done
+}
+
+Linux () {
+	for time in ${prayer_times[@]}; do
+		check_if_passed_$os $time
+		exit_code=$?
+
+		curr_hours="$(date -d "$current_time" +"%_H")"
+		curr_minutes="$(date -d "$current_time" +"%_M")"
+		curr_seconds="$(date -d "$current_time" +"%_S")"
+
+		if [[ $exit_code == 0 ]]; then
+			prayer_hours="$(date -d "$time" +"%_H")"
+			prayer_minutes="$(date -d "$time" +"%_M")"
+			hours=$(($prayer_hours-$curr_hours))
+			minutes=$(($prayer_minutes-$curr_minutes))
+			while [[ $minutes < 0 ]]; do
+				minutes=$((60$minutes))
+				hours=$(($hours-1))
+			done
+			if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
+				seconds=$((60-$curr_seconds))
+			fi
+			break
+		elif [[ $exit_code == 2 ]]; then
+			prayer_hours="$(date -d "$time" +"%_H")"
+			prayer_minutes="$(date -d "$time" +"%_M")"
+			hours=$((24-$curr_hours+$prayer_hours))
+			minutes=$((60-$curr_minutes+$prayer_minutes))
+		fi
+	done
+}
+
+$os
 
 [[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
 [[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
