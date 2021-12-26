@@ -201,12 +201,11 @@ Linux () {
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
 			while [[ $minutes < 0 ]]; do
-				minutes=$((60$minutes))
+				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
-			if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
-				seconds=$((60-$curr_seconds))
-			fi
+			minutes=$(($minutes-1))
+			seconds=$((60-$curr_seconds))
 			break
 		elif [[ $exit_code == 2 ]]; then
 			prayer_hours="$(date -d "$time" +"%_H")"
@@ -219,5 +218,5 @@ Linux () {
 
 $os
 
-[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 1 ]] && echo "$minutes minutes")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 1 ]] && echo "$minutes minuta")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
