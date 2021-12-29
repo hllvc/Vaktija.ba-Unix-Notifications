@@ -201,17 +201,18 @@ Linux () {
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
 			while [[ $minutes < 0 ]]; do
-				minutes=$((60+$minutes))
+				minutes=$((59+$minutes))
 				hours=$(($hours-1))
 			done
-			minutes=$(($minutes-1))
 			seconds=$((60-$curr_seconds))
 			break
 		elif [[ $exit_code == 2 ]]; then
 			prayer_hours="$(date -d "$time" +"%_H")"
 			prayer_minutes="$(date -d "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
-			minutes=$((60-$curr_minutes+$prayer_minutes))
+			minutes=$((59-$curr_minutes+$prayer_minutes))
+			seconds=$((60-$curr_seconds))
+			break
 		fi
 	done
 }
