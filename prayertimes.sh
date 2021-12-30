@@ -16,76 +16,85 @@ usage () {
 
   Where OPTIONS are:
 
-      -h)        Show this help
-      -c)        Remove config
-      -u)        Update town and data
-      -e)        Edit config file
-      -s)        Show config file
-      -l ARG)    Change language (where ARG is [en] or [ba])"
+      -h        Show this help
+      -c        Remove config
+      -u        Update town and data
+      -e        Edit config file
+      -s        Show config file
+      -l ARG    Change language (where ARG is [en] or [ba])"
   exit 2
+}
+
+get_town () {
+  [[ $lang == 0 ]] && echo -e "\nFetching list of towns..\n"
+  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova..\n"
+  old_ifs=$IFS
+  IFS=$'\n'
+  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
+  IFS=$old_ifs
+
+  for i in ${!locations[@]}; do
+    echo "[$i] ${locations[$i]}"
+  done
+
+  [[ $lang == 0 ]] && echo -e "\nDefault set to Sarajevo"
+  [[ $lang == 1 ]] && echo -e "\nZadani grad Sarajevo"
+
+  while
+    [[ $lang == 0 ]] && read -p $'\nChoose town [ENTER for default]\n> ' town
+    [[ $lang == 1 ]] && read -p $'\nOdaberite grad [ENTER za zadani grad]\n> ' town
+    [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]
+  do
+    [[ $lang == 0 ]] && echo -e "\nInvalid choice!"
+    [[ $lang == 1 ]] && echo -e "\nPogresan odabir!"
+  done
+
+  [[ -z $town ]] && town=77
+  [[ $lang == 0 ]] && echo -e "\nSaving town choice to $config"
+  [[ $lang == 1 ]] && echo -e "\nSpremanje grada u $config"
+  sed -i'' -e 's/town=.*/town='$town'/' $config
+}
+
+initital_config () {
+  echo $'lang=\ntown=' > $config
+
+  while [[ $lang > 1 ]] || [[ $lang < 0 ]]; do
+    read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
+  done
+
+  [[ $lang == 0 ]] && echo -e "\nSaving language choice to $config"
+  [[ $lang == 1 ]] && echo -e "\nSpremanje jezika u $config"
+  sed -i'' -e 's/lang=.*/lang='"$lang"'/' $config
+
+  get_town
+
+  usage
 }
 
 load_config () {
   [[ ! -e $config ]] && return 1
+
   old_ifs=$IFS
   IFS="="
-  town=($(grep 'town=[0-90-90-9]' $config))
-  town=${town[1]}
-  lang=($(grep 'lang=[0-1]' $config))
+
+  while
+    lang=($(grep 'lang=[0-1]' $config))
+    [[ $? != 0 ]]
+  do initital_config; done
   lang=${lang[1]}
+
+  while
+    town=($(grep 'town=[0-90-90-9]' $config))
+    [[ $? != 0 ]]
+  do
+    [[ $lang == 0 ]] && echo $'\nContinuing setup..'
+    [[ $lang == 1 ]] && echo $'\nNastavka konfiguracije..'
+    get_town
+    usage
+  done
+  town=${town[1]}
+
   IFS=$old_ifs
-}
-
-initital_config () {
-  while [[ $lang > 1 ]] || [[ $lang < 0 ]]; do
-    read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
-  done
-  [[ $lang == 0 ]] && echo -e "\nCreating config file at $config"
-  [[ $lang == 1 ]] && echo -e "\nKreiranje konfiguracija u $config"
-  echo 'lang='"$lang"'' > $config
-
-  [[ $lang == 0 ]] && echo -e "\nFetching list of towns...\n"
-  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova...\n"
-  old_ifs=$IFS
-  IFS=$'\n'
-  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
-  IFS=$old_ifs
-
-  for i in ${!locations[@]}; do
-    echo "[$i] ${locations[$i]}"
-  done
-
-  town=-1
-  while [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]; do
-    [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
-    [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
-  done
-  echo 'town='"$town"'' >> $config
-  usage
-
-}
-
-update_town () {
-  [[ $lang == 0 ]] && echo -e "\nFetching list of towns...\n"
-  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova...\n"
-  old_ifs=$IFS
-  IFS=$'\n'
-  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
-  IFS=$old_ifs
-
-  for i in ${!locations[@]}; do
-    echo "[$i] ${locations[$i]}"
-  done
-
-  town=-1
-  echo $town
-  while [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]; do
-    [[ $lang == 0 ]] && read -p $'\nChoose town\n> ' town
-    [[ $lang == 1 ]] && read -p $'\nOdaberite grad\n> ' town
-    echo $town
-    echo $((${#locations[@]}-1))
-  done
-  sed -i'' -e 's/town=.*/town='$town'/' $config
 }
 
 load_config
@@ -98,11 +107,9 @@ while getopts 'hcuesl:' arg; do
       ;;
     c)
       rm $config
-      exit 2
       ;;
     u)
-      update_town
-      exit 2
+      get_town
       ;;
     e)
       $EDITOR $config
@@ -134,7 +141,7 @@ prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
 check_if_passed_Darwin () {
   if ([[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
     ( [[ $(date -j -f "%H:%M" "$1" +"%H") == $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] && [[ $(date -j -f "%H:%M" "$1" +"%M") < $(date -j -f "%H:%M:%S" "$current_time" +"%M") ]] )) && \
-    [[ $1 == ${prayer_times[0]} ]]; then
+    [[ $1 == ${prayer_times[0]} ]] && [[ $(date -j -f "%H:%M" "${prayer_times[5]}" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]]; then
     return 2
   elif [[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
     ( [[ $(date -j -f "%H:%M" "$1" +"%H") == $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] && [[ $(date -j -f "%H:%M" "$1" +"%M") < $(date -j -f "%H:%M:%S" "$current_time" +"%M") ]] ); then
@@ -156,7 +163,7 @@ check_if_passed_Linux () {
 }
 
 Darwin () {
-	for time in $prayer_times; do
+	for time in ${prayer_times[@]}; do
 		check_if_passed_$os $time
 		exit_code=$?
 
@@ -170,18 +177,21 @@ Darwin () {
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
 			while [[ $minutes < 0 ]]; do
-				minutes=$((60$minutes))
+				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
-			if [[ $minutes == 1 ]] && [[ $hours == 0 ]]; then
-				seconds=$((60-$curr_seconds))
-			fi
+      if (($minutes <= 1)); then
+        seconds=$((60-$curr_seconds))
+      fi
 			break
 		elif [[ $exit_code == 2 ]]; then
 			prayer_hours="$(date -j -f "%H:%M" "$time" +"%_H")"
 			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
 			minutes=$((60-$curr_minutes+$prayer_minutes))
+      if (( $minute <= 1 )); then
+        seconds=$((60-$curr_seconds))
+      fi
 		fi
 	done
 }
@@ -201,17 +211,21 @@ Linux () {
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
 			while [[ $minutes < 0 ]]; do
-				minutes=$((59+$minutes))
+				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
-			seconds=$((60-$curr_seconds))
+      if (( $minutes <= 1 )); then
+        seconds=$((60-$curr_seconds))
+      fi
 			break
 		elif [[ $exit_code == 2 ]]; then
 			prayer_hours="$(date -d "$time" +"%_H")"
 			prayer_minutes="$(date -d "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
-			minutes=$((59-$curr_minutes+$prayer_minutes))
-			seconds=$((60-$curr_seconds))
+			minutes=$((60-$curr_minutes+$prayer_minutes))
+      if (( $minutes <= 1 )); then
+        seconds=$((60-$curr_seconds))
+      fi
 			break
 		fi
 	done
@@ -219,5 +233,5 @@ Linux () {
 
 $os
 
-[[ $lang == 0 ]] && echo -e "\nPrayer at $time, in $([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nVakat u $time, za $([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $lang == 0 ]] && echo -e "\nPrayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 1 ]] && echo -e "\nVakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
