@@ -1,3 +1,5 @@
-PrayerTimes.tar.gz
-recompile
-Vaktija_Notification/info
+data
+scripts/node_modules
+scripts/package.json
+scripts/package-lock.json
+sound

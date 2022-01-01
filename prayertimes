@@ -1,0 +1,167 @@
+#!/bin/sh
+
+dirpath="/home/$USER/.config/prayertimes"
+tdatapath="$dirpath/data/town-data.json"
+rdatapath="$dirpath/data/reminders.json"
+scriptspath="$dirpath/scripts"
+
+repourl="https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main"
+
+iconurl="https://raw.githubusercontent.com/vaktija/vaktija.ba/master/src/img/icon-light.svg"
+icon="$dirpath/data/icon.svg"
+
+configuretimetext() {
+	name="$2"
+	hours=$(date -d "$1" "+%_H")
+	minutes=$(date -d "$1" "+%_M")
+	seconds=$(date -d "$1" "+%_S")
+	if [[ $hours -eq 0 ]]; then
+		hours=""
+	elif [[ $hours -eq 1 ]] || [[ $hours -eq 21 ]]; then
+		hours="$(date -d "$time" "+%_H sat")"
+	elif [[ $hours -eq 2 ]] || [[ $hours -eq 3 ]] || [[ $hours -eq 4 ]] || [[ $hours -eq 22 ]] || [[ $hours == 23 ]]; then
+		hours="$(date -d "$time" "+%_H sata")"
+	elif [[ $hours < 10 ]]; then
+		hours="$(date -d "$time" "+%_H sati")"
+	else
+		hours="$(date -d "$time" "+ %_H sati")"
+	fi
+	if [[ $minutes -eq 0 ]]; then
+		minutes=""
+	elif [[ $minutes -eq 1 ]] || [[ $minutes -eq 21 ]]; then
+		minutes="$(date -d "$time" "+ %_M minutu")"
+	elif [[ $minutes -eq 2 ]] || [[ $minutes -eq 3 ]] || [[ $minutes -eq 4 ]] || [[ $minutes -eq 22 ]] || [[ $minutes == 23 ]]; then
+		minutes="$(date -d "$time" "+ %_M minute")"
+	elif [[ $minutes < 10 ]]; then
+		minutes="$(date -d "$time" "+%_M minuta")"
+	else
+		minutes="$(date -d "$time" "+ %_M minuta")"
+	fi
+	if [[ $hours = "" ]] && [[ $minutes = "" ]]; then
+		if [[ $seconds -eq 0 ]]; then
+			notifbody="$name je sad!"
+			break
+		elif [[ $seconds -eq 1 ]]; then
+			seconds="$(date -d "$time" "+%_S sekundu")"
+		elif [[ $seconds -eq 2 ]] || [[ $seconds -eq 3 ]] || [[ $seconds -eq 4 ]]; then
+			seconds="$(date -d "$time" "+%_S sekunde")"
+		elif [[ $seconds < 10 ]]; then
+			seconds="$(date -d "$time" "+%_S sekundi")"
+		else
+			modified=false
+			for (( sec = 21; sec < 60; sec+=10 )); do
+				if [[ $seconds -eq $sec ]]; then
+					seconds="$(date -d "$time" "+ %_S sekundu")"
+					modified=true
+					break
+				fi
+			done
+			for (( sec1 = 22, sec2 = 23, sec3 = 24 ; sec1 < 60; sec1+=10, sec2+=10, sec3+=10 )); do
+				if [[ $seconds -eq $sec1 ]] || [[ $seconds -eq $sec2 ]] || [[ $seconds -eq $sec3 ]]; then
+					seconds="$(date -d "$time" "+ %_S sekunde")"
+					modified=true
+					break
+				fi
+			done
+			if [[ $modified = false ]]; then
+				seconds="$(date -d "$time" "+ %_S sekundi")"
+			fi
+		fi
+		notifbody="$name za$seconds"
+	elif [[ $hours = "" ]]; then
+		notifbody="$name za$minutes"
+	elif [[ $minutes = "" ]]; then
+		notifbody="$name za$hours"
+	else
+		notifbody="$name za$hours i$minutes"
+	fi
+}
+
+sendnotif() {
+	name="$1"
+	time=$2
+	notifbody=""
+	configuretimetext $time "$name"
+	# notifbody=$(configuretimetext $time $name)
+	notify-send.sh "Vaktija.ba" "$notifbody" \
+		-i $icon \
+    -o "Open in Firefox:firefox --new-window www.vaktija.ba" \
+    # -o "Snooze 5 min:notify-send.sh 'Delayed 5 minutes'" \
+		# -o "Snooze 10 min:notify-send.sh 'Delayed 10 minutes'" \
+}
+
+if [[ ! -d $dirpath ]]; then
+	# echo "Downloading necessary packages ..."
+	# sudo yay -S at notify-send.sh jq
+	echo "Downloading script ..."
+	sudo wget -O /usr/local/bin/prayertimes \
+		https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
+	echo "Setting permissions ..."
+	sudo chmod a+x /usr/local/bin/prayertimes
+	mkdir -v $dirpath
+	mkdir -v $scriptspath
+	wget -O $scriptspath/pick-town.js $repourl/scripts/pick-town.js
+	wget -O $scriptspath/get-town-data.js $repourl/scripts/get-town-data.js
+	wget -O $scriptspath/calculate-reminders.js $repourl/scripts/calculate-reminders.js
+	wget -O $scriptspath/.env $repourl/scripts/.env
+	cd $scriptspath; npm install node-fetch dotenv --save;
+	node $scriptspath/pick-town.js
+	node $scriptspath/get-town-data.js
+	echo -e "\nDownloading icon ...\n"
+	wget -O $icon $iconurl
+	echo -e "Icon downloaded ..."
+fi
+if [[ $1 = "clear" ]]; then
+	rm -rfv $dirpath
+	exit
+elif [[ $1 = "fetch" ]]; then
+	cd $scriptspath; node $scriptspath/get-town-data.js
+elif [[ $1 = 'update' ]]; then
+	echo "Updating script ..."
+	sudo wget -O /usr/local/bin/prayertimes \
+		https://raw.githubusercontent.com/hllvc/Vaktija.ba-Gnome-Notification/main/prayertimes
+	echo "Setting permissions ..."
+	sudo chmod a+x /usr/local/bin/prayertimes
+fi
+
+node $scriptspath/calculate-reminders.js
+# town=$(jq -j '.lokacija' $tdatapath)
+# date=$(jq -j '.datum[1]' $tdatapath)
+rawdata="$dirpath/data/rawdata"
+jq -r '.vakat.until[]' $rdatapath > $rawdata
+while read line; do
+	times+=( $line )
+done < $rawdata
+# rm $rawdata
+jq -r '.vakat[]' $tdatapath > $rawdata
+while read line; do
+	prayers+=( "$line" )
+done < $rawdata
+rm $rawdata
+for index in ${!times[@]}; do
+	if [[ ! ${times[$index]} = "null" ]]; then
+		sendnotif "${prayers[$index]}" ${times[$index]}
+		break
+	fi
+done
+
+# currentdate=$(date "+%H:%_M:%_S")
+# for time in ${times[@]}; do
+# 	hours=$(( $(date -d "$time" "+%H") - $(date -d "$currentdate" "+%H") ))
+# 	minutes=$(( $(date -d "$time" "+%_M") - $(date -d "$currentdate" "+%_M") ))
+# 	seconds=$(( 60 - $(date -d "$currentdate" "+%_S") ))
+# 	if [[ $seconds -eq 60 ]]; then seconds=00; fi
+# 	if [[ $hours -lt 0 ]]; then
+# 		hours=$( expr 24 + $hours )
+# 	fi
+# 	if [[ $minutes -lt 0 ]]; then
+# 		minutes=$( expr 60 + $minutes )
+# 		hours=$(expr $hours - 1)
+# 	fi
+# 	minutes=$(expr $minutes - 1)
+# 	if [[ $hours -eq 24 ]]; then hours=00; fi
+# 	if [[ ! $hours -lt 0 ]] && [[ ! $minutes -lt 0 ]]; then
+# 		diff=$(date -d "$hours:$minutes:$seconds" "+%T")
+# 		echo "$time - $diff"
+# 	fi
+# done
