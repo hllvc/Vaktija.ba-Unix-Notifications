@@ -180,8 +180,9 @@ Darwin () {
 				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
-      if (($minutes <= 1)); then
+      if (( $minutes == 1 )) && (( $curr_seconds != 0 )); then
         seconds=$((60-$curr_seconds))
+        minutes=$(($minutes-1))
       fi
 			break
 		elif [[ $exit_code == 2 ]]; then
@@ -189,9 +190,10 @@ Darwin () {
 			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
 			minutes=$((60-$curr_minutes+$prayer_minutes))
-      if (( $minute <= 1 )); then
-        seconds=$((60-$curr_seconds))
+      if (( $minutes > 59 )); then
+        minutes=$(($minutes-60))
       fi
+      break
 		fi
 	done
 }
@@ -214,8 +216,9 @@ Linux () {
 				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
-      if (( $minutes <= 1 )); then
+      if (( $minutes == 1 )) && (( $curr_seconds != 0 )); then
         seconds=$((60-$curr_seconds))
+        minutes=$(($minutes-1))
       fi
 			break
 		elif [[ $exit_code == 2 ]]; then
@@ -223,8 +226,8 @@ Linux () {
 			prayer_minutes="$(date -d "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
 			minutes=$((60-$curr_minutes+$prayer_minutes))
-      if (( $minutes <= 1 )); then
-        seconds=$((60-$curr_seconds))
+      if (( $minutes > 59 )); then
+        minutes=$(($minutes-60))
       fi
 			break
 		fi
@@ -233,5 +236,5 @@ Linux () {
 
 $os
 
-[[ $lang == 0 ]] && echo -e "\nPrayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nVakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $lang == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $lang == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
