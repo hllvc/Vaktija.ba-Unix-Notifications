@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [[ ! -e /usr/local/bin/prayertimes ]]; then
+  echo "Downloading script.."
+  sudo wget -O /usr/local/bin/prayertimes https://raw.githubusercontent.com/hllvc/Vaktija.ba-Unix-Notifications/develop/prayertimes.sh
+  echo "Setting permission.."
+  sudo chmod a+x /usr/local/bin/prayertimes
+  exit 2
+fi
+
 os="$(uname)"
 
 if [[ $os == Darwin ]]; then
@@ -9,6 +17,7 @@ elif [[ $os == Linux ]]; then
 fi
 
 config="$homedir/$USER/.prayerconfig"
+
 url="https://api.vaktija.ba/vaktija/v1"
 
 usage () {
@@ -106,7 +115,8 @@ while getopts 'hcuesl:' arg; do
       usage
       ;;
     c)
-      rm $config
+      sudo rm /usr/local/bin/prayertimes $config
+      exit 2
       ;;
     u)
       get_town
