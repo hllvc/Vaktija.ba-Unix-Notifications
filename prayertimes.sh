@@ -30,6 +30,7 @@ usage () {
       -u        Update town and data
       -e        Edit config file
       -s        Show config file
+      -n        Show notification
       -l ARG    Change language (where ARG is [en] or [ba])"
   exit 2
 }
@@ -109,7 +110,7 @@ load_config () {
 load_config
 [[ $? == 1 ]] && initital_config
 
-while getopts 'hcuesl:' arg; do
+while getopts 'hcuesnl:' arg; do
   case "$arg" in
     h)
       usage
@@ -129,6 +130,9 @@ while getopts 'hcuesl:' arg; do
       cat $config
       exit 2
       ;;
+		n)
+			notification=true
+			;;
     l)
       if [[ $OPTARG == "en" ]]; then
         lang=0
@@ -146,7 +150,10 @@ while getopts 'hcuesl:' arg; do
 done
 
 current_time="$(date +"%H:%M:%S")"
-prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
+response=$(curl -fsSL "$url/$town")
+prayer_times=($(echo $response | jq -r ".vakat[]"))
+town_name=$(echo $response | jq -r ".lokacija")
+town_name=$(echo $town_name | awk '{print tolower($0)}' | sed 's/\ /-/' | sed 's/ž/z/' | sed 's/č/c/' | sed 's/č/c/' | sed 's/š/s/')
 
 check_if_passed_Darwin () {
   if ([[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
@@ -244,7 +251,17 @@ Linux () {
 	done
 }
 
+Darwin_notification () {
+  terminal-notifier -title "Vaktija.ba" -message "$1" -open "https://vaktija.ba/$town_name"
+}
+
 $os
 
-[[ $lang == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $lang == 0 ]] && text=$(echo -e "Next prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")")
+[[ $lang == 1 ]] && text=$(echo -e "Sljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")")
+
+if [[ $notification == true ]]; then
+	$os\_notification "$text"
+else
+	echo -e "\n$text"
+fi
