@@ -188,12 +188,12 @@ Darwin () {
 		curr_minutes="$(date -j -f "%H:%M:%S" "$current_time" +"%_M")"
 		curr_seconds="$(date -j -f "%H:%M:%S" "$current_time" +"%_S")"
 
-		if [[ $exit_code == 0 ]]; then
+		if (( $exit_code == 0 )); then
 			prayer_hours="$(date -j -f "%H:%M" "$time" +"%_H")"
 			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
-			while [[ $minutes < 0 ]]; do
+			while (( $minutes < 0 )); do
 				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
@@ -202,7 +202,7 @@ Darwin () {
         minutes=$(($minutes-1))
       fi
 			break
-		elif [[ $exit_code == 2 ]]; then
+		elif (( $exit_code == 2 )); then
 			prayer_hours="$(date -j -f "%H:%M" "$time" +"%_H")"
 			prayer_minutes="$(date -j -f "%H:%M" "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
@@ -224,12 +224,12 @@ Linux () {
 		curr_minutes="$(date -d "$current_time" +"%_M")"
 		curr_seconds="$(date -d "$current_time" +"%_S")"
 
-		if [[ $exit_code == 0 ]]; then
+		if (( $exit_code == 0 )); then
 			prayer_hours="$(date -d "$time" +"%_H")"
 			prayer_minutes="$(date -d "$time" +"%_M")"
 			hours=$(($prayer_hours-$curr_hours))
 			minutes=$(($prayer_minutes-$curr_minutes))
-			while [[ $minutes < 0 ]]; do
+			while (( $minutes < 0 )); do
 				minutes=$((60+$minutes))
 				hours=$(($hours-1))
 			done
@@ -238,7 +238,7 @@ Linux () {
         minutes=$(($minutes-1))
       fi
 			break
-		elif [[ $exit_code == 2 ]]; then
+		elif (( $exit_code == 2 )); then
 			prayer_hours="$(date -d "$time" +"%_H")"
 			prayer_minutes="$(date -d "$time" +"%_M")"
 			hours=$((24-$curr_hours+$prayer_hours))
@@ -253,6 +253,10 @@ Linux () {
 
 Darwin_notification () {
   terminal-notifier -title "Vaktija.ba" -message "$1" -open "https://vaktija.ba/$town_name"
+}
+
+Linux_notification () {
+	notify-send.sh "Vaktija.ba" "$1" -o "Open in Firefox:firefox --new-window www.vaktija.ba"
 }
 
 $os
