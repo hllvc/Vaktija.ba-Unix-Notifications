@@ -1,154 +1,137 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [[ ! -e /usr/local/bin/prayertimes ]]; then
+BINARY_LOCATION=/usr/local/bin/prayertimes
+
+if [[ ! -e $BINARY_LOCATION ]]; then
   echo "Downloading script.."
-  sudo wget -O /usr/local/bin/prayertimes https://raw.githubusercontent.com/hllvc/Vaktija.ba-Unix-Notifications/develop/prayertimes.sh
+  sudo wget -O $BINARY_LOCATION https://raw.githubusercontent.com/hllvc/Vaktija.ba-Unix-Notifications/develop/prayertimes.sh
   echo "Setting permission.."
-  sudo chmod a+x /usr/local/bin/prayertimes
+  sudo chmod 755 $BINARY_LOCATION
   exit 2
 fi
 
-os="$(uname)"
+OS="$(uname)"
 
-if [[ $os == Darwin ]]; then
-  homedir="/Users"
-elif [[ $os == Linux ]]; then
-  homedir="/home"
-fi
+CONFIG="$HOME/.prayerconfig"
 
-config="$homedir/$USER/.prayerconfig"
+API_URL="https://api.vaktija.ba/vaktija/v1"
 
-url="https://api.vaktija.ba/vaktija/v1"
+__usage() {
+  cat << EOF
+    Usage:
+      $(basename $0) OPTION <ARG>
 
-usage () {
-  echo -e "\nUsage: $(basename "$0") [OPTIONS] <ARG>
+    Where OPTIONs are:
 
-  Where OPTIONS are:
+      --clean                 Remove $HOME/.prayerconfig file (resets settings) and setup new config
+      --view-config <ARG>     Show config file in stdout (default is cat, can use any other like vi, less, head, tail ...)
+      --LANGUAGE <ARG>,
+      -l <ARG>                Change output language (en or ba)
 
-      -h        Show this help
-      -c        Remove config
-      -u        Update town and data
-      -e        Edit config file
-      -s        Show config file
-      -l ARG    Change language (where ARG is [en] or [ba])"
+      --uninstall <ARG>       Unisntall binary file from $BINARY_LOCATION (pass argument all to also clean config data)
+
+      --help, -h              Show this help menu
+EOF
   exit 2
 }
 
-get_town () {
-  [[ $lang == 0 ]] && echo -e "\nFetching list of towns..\n"
-  [[ $lang == 1 ]] && echo -e "\nDobavljamo listu gradova..\n"
-  old_ifs=$IFS
-  IFS=$'\n'
-  locations=($(curl -fsSL "$url/lokacije" | jq -r ".[]"))
-  IFS=$old_ifs
+__get_town() {
+  (( $LANGUAGE == 0 )) && printf "\nFetching list of towns..\n"
+  (( $LANGUAGE == 1 )) && printf "\nDobavljamo listu gradova..\n"
 
-  for i in ${!locations[@]}; do
-    echo "[$i] ${locations[$i]}"
-  done
+  ## Explained nested/piped command below
+  ## curl gets array of all locations from Vaktija.ba
+  ## array is parsed with tr (translate characters) where we remove all occurences of [,",] characters
+  ## again what is left are locations separated by comma (,), we parse again with tr and replace comma (,) with new line (\n)
+  ## we then pipe list of locations with new line to nl (line numbering filter) where we say to start counting from 0, and to align left
+  ## after that we pipe everything to fzf (fuzzy finder), now we have list of locations indexed with number from 0
+  ## when we find desired location, we pipe it to cut (cutout selected portion) where we say to cut(out) first part, which is location number
+  ## finally we tr left spaces so we get just number of location
+  local LOCATION=`curl -fsSL "$API_URL/lokacije" | tr -d '["]' | tr ',' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
 
-  [[ $lang == 0 ]] && echo -e "\nDefault set to Sarajevo"
-  [[ $lang == 1 ]] && echo -e "\nZadani grad Sarajevo"
-
-  while
-    [[ $lang == 0 ]] && read -p $'\nChoose town [ENTER for default]\n> ' town
-    [[ $lang == 1 ]] && read -p $'\nOdaberite grad [ENTER za zadani grad]\n> ' town
-    [[ $town -lt 0 ]] || [[ $town -gt $((${#locations[@]}-1)) ]]
-  do
-    [[ $lang == 0 ]] && echo -e "\nInvalid choice!"
-    [[ $lang == 1 ]] && echo -e "\nPogresan odabir!"
-  done
-
-  [[ -z $town ]] && town=77
-  [[ $lang == 0 ]] && echo -e "\nSaving town choice to $config"
-  [[ $lang == 1 ]] && echo -e "\nSpremanje grada u $config"
-  sed -i'' -e 's/town=.*/town='$town'/' $config
+  sed -i '' -e "s/LOCATION=.*/LOCATION=$LOCATION/" $CONFIG
 }
 
-initital_config () {
-  echo $'lang=\ntown=' > $config
+__initial_setup() {
+  cat > $CONFIG <<EOF
+  LANGUAGE=
+  LOCATION=
+EOF
 
-  while [[ $lang > 1 ]] || [[ $lang < 0 ]]; do
-    read -p $'\nLanguages (Jezici):\n\n[0] English\n[1] Bosanski\n\nChoose language (Odaberite jezik)\n> ' lang
-  done
+  local LANGUAGES="English Bosanski"
+  LANGUAGE=`echo $LANGUAGES | tr ' ' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
 
-  [[ $lang == 0 ]] && echo -e "\nSaving language choice to $config"
-  [[ $lang == 1 ]] && echo -e "\nSpremanje jezika u $config"
-  sed -i'' -e 's/lang=.*/lang='"$lang"'/' $config
+  (( $LANGUAGE == 0 )) && printf "\nSaving language choice to $CONFIG"
+  (( $LANGUAGE == 1 )) && printf "\nSpremanje jezika u $CONFIG"
+  sed -i '' -e "s/LANGUAGE=.*/LANGUAGE=$LANGUAGE/" $CONFIG
 
-  get_town
-
-  usage
+  __get_town
+  __usage
 }
 
-load_config () {
-  [[ ! -e $config ]] && return 1
+__load_config() {
+  [[ ! -e $CONFIG ]] && return 1
 
-  old_ifs=$IFS
-  IFS="="
+  LANGUAGE=`grep 'LANGUAGE=[0-1]' $CONFIG | cut -d"=" -f 2`
+  LOCATION=`grep 'LOCATION=[0-90-90-9]' $CONFIG | cut -d"=" -f 2`
+  # (( $LANGUAGE == 0 )) && echo $'\nContinuing setup..'
+  # (( $LANGUAGE == 1 )) && echo $'\nNastavka konfiguracije..'
 
-  while
-    lang=($(grep 'lang=[0-1]' $config))
-    [[ $? != 0 ]]
-  do initital_config; done
-  lang=${lang[1]}
-
-  while
-    town=($(grep 'town=[0-90-90-9]' $config))
-    [[ $? != 0 ]]
-  do
-    [[ $lang == 0 ]] && echo $'\nContinuing setup..'
-    [[ $lang == 1 ]] && echo $'\nNastavka konfiguracije..'
-    get_town
-    usage
-  done
-  town=${town[1]}
-
-  IFS=$old_ifs
 }
 
-load_config
-[[ $? == 1 ]] && initital_config
+__load_config
+(( $? == 1 )) && __initial_setup
 
-while getopts 'hcuesl:' arg; do
-  case "$arg" in
-    h)
-      usage
+for arg; do
+  case ${arg} in
+    "--clean")
+      shift
+      rm -r $CONFIG
+      __initial_setup
       ;;
-    c)
-      sudo rm /usr/local/bin/prayertimes $config
-      exit 2
-      ;;
-    u)
-      get_town
-      ;;
-    e)
-      $EDITOR $config
-      exit 2
-      ;;
-    s)
-      cat $config
-      exit 2
-      ;;
-    l)
-      if [[ $OPTARG == "en" ]]; then
-        lang=0
-      elif [[ $OPTARG == "ba" ]]; then
-        lang=1
+    "--view-config")
+      shift
+      if [[ -z $1 ]]; then
+        cat $CONFIG
       else
-        usage
+        $* $CONFIG
       fi
-      sed -i'' -e 's/lang=[0-1]/lang='"$lang"'/' $config
+      exit 0
       ;;
-    *)
-      usage
+    "--lang" | "-l")
+      shift
+      if (( $# == 0 )); then
+        LANGUAGES="English Bosanski"
+        LANGUAGE=`echo $LANGUAGES | tr ' ' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
+      elif [[ $1 == "en" ]]; then
+        LANGUAGE=0
+      elif [[ $1 == "ba" ]]; then
+        LANGUAGE=1
+      else
+        __usage
+      fi
+      sed -i '' -e "s/LANGUAGE=[0-1]/LANGUAGE=$LANGUAGE/" $CONFIG
+      break
       ;;
+    "--uninstall")
+      shift
+      [[ $1 == all ]] && rm -r $CONFIG
+      # sudo rm -rf $BINARY_LOCATION
+      echo "sudo rm -rf $BINARY_LOCATION"
+      exit 0
+      ;;
+    "--help" | "-h")
+      __usage && exit 2
+      ;;
+      *)
+        break
   esac
 done
 
 current_time="$(date +"%H:%M:%S")"
-prayer_times=($(curl -fsSL "$url/$town" | jq -r ".vakat[]"))
+prayer_times=($(curl -fsSL "$API_URL/$LOCATION" | jq -r ".vakat[]"))
 
-check_if_passed_Darwin () {
+__check_if_passed_Darwin() {
   if ([[ $(date -j -f "%H:%M" "$1" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] || \
     ( [[ $(date -j -f "%H:%M" "$1" +"%H") == $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]] && [[ $(date -j -f "%H:%M" "$1" +"%M") < $(date -j -f "%H:%M:%S" "$current_time" +"%M") ]] )) && \
     [[ $1 == ${prayer_times[0]} ]] && [[ $(date -j -f "%H:%M" "${prayer_times[5]}" +"%H") < $(date -j -f "%H:%M:%S" "$current_time" +"%H") ]]; then
@@ -160,7 +143,7 @@ check_if_passed_Darwin () {
   return 0
 }
 
-check_if_passed_Linux () {
+__check_if_passed_Linux () {
 	if ([[ $(date -d "$1" +"%H") < $(date -d "$current_time" +"%H") ]] || \
 		( [[ $(date -d "$1" +"%H") == $(date -d "$current_time" +"%H") ]] && [[ $(date -d "$1" +"%M") < $(date -d "$current_time" +"%M") ]] )) && \
 		[[ $1 == ${prayer_times[0]} ]] && [[ $(date -d "${prayer_times[5]}" +"%H") < $(date -d "$current_time" +"%H") ]]; then
@@ -172,9 +155,9 @@ check_if_passed_Linux () {
 	return 0
 }
 
-Darwin () {
+__Darwin () {
 	for time in ${prayer_times[@]}; do
-		check_if_passed_$os $time
+		__check_if_passed_$OS $time
 		exit_code=$?
 
 		curr_hours="$(date -j -f "%H:%M:%S" "$current_time" +"%_H")"
@@ -208,9 +191,9 @@ Darwin () {
 	done
 }
 
-Linux () {
+__Linux () {
 	for time in ${prayer_times[@]}; do
-		check_if_passed_$os $time
+		__check_if_passed_$OS $time
 		exit_code=$?
 
 		curr_hours="$(date -d "$current_time" +"%_H")"
@@ -244,7 +227,7 @@ Linux () {
 	done
 }
 
-$os
+__$OS
 
-[[ $lang == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $lang == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+[[ $LANGUAGE == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+[[ $LANGUAGE == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
