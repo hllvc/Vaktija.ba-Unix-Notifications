@@ -36,9 +36,6 @@ EOF
 }
 
 __get_town() {
-  (( $LANGUAGE == 0 )) && printf "\nFetching list of towns..\n"
-  (( $LANGUAGE == 1 )) && printf "\nDobavljamo listu gradova..\n"
-
   ## Explained nested/piped command below
   ## curl gets array of all locations from Vaktija.ba
   ## array is parsed with tr (translate characters) where we remove all occurences of [,",] characters
@@ -47,22 +44,26 @@ __get_town() {
   ## after that we pipe everything to fzf (fuzzy finder), now we have list of locations indexed with number from 0
   ## when we find desired location, we pipe it to cut (cutout selected portion) where we say to cut(out) first part, which is location number
   ## finally we tr left spaces so we get just number of location
-  local LOCATION=`curl -fsSL "$API_URL/lokacije" | tr -d '["]' | tr ',' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
+  local RAW_LOCATION=`curl -fsSL "$API_URL/lokacije" | tr -d '["]' | tr ',' '\n' | nl -v 0 -n ln | fzf`
+  local LOCATION=`echo $RAW_LOCATION | cut -d ' ' -f 1 | tr -d [:space:]`
+  local LOCATION_NAME=`echo $RAW_LOCATION | cut -d ' ' -f 2 | tr -d [:space:]`
 
   sed -i '' -e "s/LOCATION=.*/LOCATION=$LOCATION/" $CONFIG
+  sed -i '' -e "s/LOCATION_NAME=.*/LOCATION_NAME=$LOCATION_NAME/" $CONFIG
 }
 
 __initial_setup() {
   cat > $CONFIG <<EOF
   LANGUAGE=
   LOCATION=
+  LOCATION_NAME=
 EOF
 
   local LANGUAGES="English Bosanski"
-  LANGUAGE=`echo $LANGUAGES | tr ' ' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
+  local LANGUAGE=`echo $LANGUAGES | tr ' ' '\n' | nl -v 0 -n ln | fzf | cut -f 1 | tr -d [:space:]`
 
-  (( $LANGUAGE == 0 )) && printf "\nSaving language choice to $CONFIG"
-  (( $LANGUAGE == 1 )) && printf "\nSpremanje jezika u $CONFIG"
+  (( $LANGUAGE == 0 )) && printf "\nConfig saved to to $CONFIG\n"
+  (( $LANGUAGE == 1 )) && printf "\nKonfiguracija spremljena u $CONFIG\n"
   sed -i '' -e "s/LANGUAGE=.*/LANGUAGE=$LANGUAGE/" $CONFIG
 
   __get_town
@@ -72,8 +73,9 @@ EOF
 __load_config() {
   [[ ! -e $CONFIG ]] && return 1
 
-  LANGUAGE=`grep 'LANGUAGE=[0-1]' $CONFIG | cut -d"=" -f 2`
+  LANGUAGE=`grep 'LANGUAGE=.*' $CONFIG | cut -d"=" -f 2`
   LOCATION=`grep 'LOCATION=[0-90-90-9]' $CONFIG | cut -d"=" -f 2`
+  LOCATION_NAME=`grep 'LOCATION_NAME=.*' $CONFIG | cut -d"=" -f 2`
   # (( $LANGUAGE == 0 )) && echo $'\nContinuing setup..'
   # (( $LANGUAGE == 1 )) && echo $'\nNastavka konfiguracije..'
 
@@ -228,6 +230,8 @@ __Linux () {
 }
 
 __$OS
+
+[[ $LANGUAGE == 0 ]] && printf "\nActive location: %s\n" $LOCATION_NAME
 
 [[ $LANGUAGE == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
 [[ $LANGUAGE == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
