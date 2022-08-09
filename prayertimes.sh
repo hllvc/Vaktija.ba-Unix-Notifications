@@ -36,14 +36,6 @@ EOF
 }
 
 __get_town() {
-  ## Explained nested/piped command below
-  ## curl gets array of all locations from Vaktija.ba
-  ## array is parsed with tr (translate characters) where we remove all occurences of [,",] characters
-  ## again what is left are locations separated by comma (,), we parse again with tr and replace comma (,) with new line (\n)
-  ## we then pipe list of locations with new line to nl (line numbering filter) where we say to start counting from 0, and to align left
-  ## after that we pipe everything to fzf (fuzzy finder), now we have list of locations indexed with number from 0
-  ## when we find desired location, we pipe it to cut (cutout selected portion) where we say to cut(out) first part, which is location number
-  ## finally we tr left spaces so we get just number of location
   local RAW_LOCATION=`curl -fsSL "$API_URL/lokacije" | tr -d '["]' | tr ',' '\n' | nl -v 0 -n ln | fzf`
   local LOCATION=`echo $RAW_LOCATION | cut -d ' ' -f 1 | tr -d [:space:]`
   local LOCATION_NAME=`echo $RAW_LOCATION | cut -d ' ' -f 2 | tr -d [:space:]`
@@ -231,7 +223,18 @@ __Linux () {
 
 __$OS
 
-[[ $LANGUAGE == 0 ]] && printf "\nActive location: %s\n" $LOCATION_NAME
+case $LANGUAGE in
+  0)
+    res="\nActive location: $LOCATION_NAME.\n\nUpcoming prayer at $time`([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in "``[[ $hours > 0 ]] && echo "$hours hours "``[[ $minutes > 0 ]] && echo "$minutes minutes "``[[ $seconds > 0 ]] && echo "$seconds seconds"`"
+    ;;
+  1)
+    res="\nAktivna lokacija: $LOCATION_NAME.\n\nSljedeci vakat u $time`([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za "``[[ $hours > 0 ]] && echo "$hours sati "``[[ $minutes > 0 ]] && echo "$minutes minuta "``[[ $seconds > 0 ]] && echo "$seconds sekundi"`"
+    ;;
+esac
 
-[[ $LANGUAGE == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
-[[ $LANGUAGE == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
+printf "%s" "$(echo -e $res)"
+
+# [[ $LANGUAGE == 0 ]] && printf "\nActive location: %s\n" $LOCATION_NAME
+
+# [[ $LANGUAGE == 0 ]] && echo -e "\nNext prayer at $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", in ")$([[ $hours > 0 ]] && echo "$hours hours ")$([[ $minutes > 0 ]] && echo "$minutes minutes ")$([[ $seconds > 0 ]] && echo "$seconds seconds")"
+# [[ $LANGUAGE == 1 ]] && echo -e "\nSljedeci vakat u $time$(([[ $hours > 0 ]] || [[ $minutes > 0 ]] || [[ $seconds > 0 ]]) && echo ", za ")$([[ $hours > 0 ]] && echo "$hours sati ")$([[ $minutes > 0 ]] && echo "$minutes minuta ")$([[ $seconds > 0 ]] && echo "$seconds sekundi")"
